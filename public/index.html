@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitbit Health Coach</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏃‍♂️ Fitbit Health Coach</h1>
+            <p class="subtitle">Your AI-powered personal health companion</p>
+        </header>
+
+        <!-- Authentication Section -->
+        <div id="auth-section" class="card">
+            <div id="not-connected">
+                <h2>Get Started</h2>
+                <p>Connect your Fitbit account to receive personalized health coaching powered by AI.</p>
+                <button id="connect-btn" class="btn btn-primary">
+                    <span>Connect with Fitbit</span>
+                </button>
+            </div>
+            
+            <div id="connected" style="display: none;">
+                <div class="success-banner">
+                    <span>✓ Connected to Fitbit</span>
+                    <button id="logout-btn" class="btn btn-secondary btn-sm">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" style="display: none;">
+            <div class="loader"></div>
+            <p>Loading your health data...</p>
+        </div>
+
+        <!-- User Profile Section -->
+        <div id="profile-section" class="card" style="display: none;">
+            <h2>Welcome, <span id="user-name"></span>!</h2>
+            <div id="profile-info"></div>
+        </div>
+
+        <!-- Health Data Section -->
+        <div id="data-section" style="display: none;">
+            <div class="card">
+                <h2>Today's Activity</h2>
+                <div id="activity-stats" class="stats-grid">
+                    <!-- Activity stats will be inserted here -->
+                </div>
+            </div>
+
+            <!-- AI Coaching Section -->
+            <div class="card coaching-card">
+                <h2>🤖 AI Health Coach</h2>
+                <p>Get personalized encouragement based on your progress!</p>
+                <button id="get-coaching-btn" class="btn btn-primary">Get Coaching</button>
+                
+                <div id="coaching-response" style="display: none;">
+                    <div class="coaching-message">
+                        <div class="message-header">
+                            <strong>Your Coach Says:</strong>
+                        </div>
+                        <p id="coaching-text"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Display -->
+        <div id="error-section" class="error-card" style="display: none;">
+            <h3>⚠️ Error</h3>
+            <p id="error-message"></p>
+        </div>
+
+        <footer>
+            <p>Built with ❤️ using Fitbit API and Local LLM</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
