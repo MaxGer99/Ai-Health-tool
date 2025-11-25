@@ -2,6 +2,10 @@
 
 A web application that integrates with Fitbit API to fetch your health data and uses a personal LLM to provide personalized health coaching and encouragement.
 
+## 📖 Documentation
+
+**[View Full Documentation on GitHub Pages](https://yourusername.github.io/fitbit-health-coach/docs/)**
+
 ## Features
 
 - 🏃‍♂️ Fetch real-time data from Fitbit (steps, heart rate, sleep, calories, activities)
@@ -108,6 +112,24 @@ Visit http://localhost:3001 in your browser.
 - **Fitbit OAuth error**: Check your callback URL matches exactly
 - **LLM not responding**: Ensure your local LLM server is running
 - **CORS issues**: Make sure CORS is enabled in server.js
+
+## GitHub Pages Deployment
+
+This project is configured for GitHub Pages deployment:
+
+1. **Enable GitHub Pages:**
+   - Go to your repository settings
+   - Navigate to "Pages" section
+   - Select source: "GitHub Actions"
+
+2. **Automatic Deployment:**
+   - Push to `main` branch triggers automatic deployment
+   - The workflow builds and deploys the documentation site
+   - Access your site at: `https://yourusername.github.io/fitbit-health-coach/`
+
+3. **Documentation Site:**
+   - The `docs/` folder contains a standalone documentation page
+   - Accessible at: `https://yourusername.github.io/fitbit-health-coach/docs/`
 
 ## License
 

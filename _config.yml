@@ -1,0 +1,11 @@
+# GitHub Pages Configuration
+theme: jekyll-theme-cayman
+title: Fitbit Health Coach
+description: AI-powered personal health coaching with Fitbit integration
+show_downloads: true
+google_analytics: 
+plugins:
+  - jekyll-relative-links
+relative_links:
+  enabled: true
+  collections: true
