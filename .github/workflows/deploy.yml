@@ -37,6 +37,7 @@ jobs:
         run: |
           mkdir -p dist
           cp index.html dist/
+          cp .nojekyll dist/
           cp -r public dist/
           cp -r docs dist/ 2>/dev/null || true
           cp README.md dist/
