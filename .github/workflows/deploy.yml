@@ -36,9 +36,11 @@ jobs:
       - name: Create static build
         run: |
           mkdir -p dist
-          cp -r public/* dist/
-          cp package.json dist/
+          cp index.html dist/
+          cp -r public dist/
+          cp -r docs dist/ 2>/dev/null || true
           cp README.md dist/
+          cp package.json dist/
       
       - name: Setup Pages
         uses: actions/configure-pages@v4

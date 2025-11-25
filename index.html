@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitbit Health Coach - Documentation</title>
+    <title>Fitbit Health Coach - AI-Powered Health Coaching</title>
     <style>
         * {
             margin: 0;
@@ -137,6 +137,11 @@
             border-left: 4px solid #28a745;
         }
         
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #0c5460;
+        }
+        
         ul, ol {
             margin-left: 30px;
             margin-bottom: 15px;
@@ -174,6 +179,14 @@
             justify-content: center;
             font-weight: bold;
         }
+        
+        a {
+            color: #667eea;
+        }
+        
+        a:hover {
+            color: #764ba2;
+        }
     </style>
 </head>
 <body>
@@ -183,6 +196,10 @@
             <p>AI-Powered Personal Health Coaching with Fitbit Integration</p>
             <a href="https://github.com/MaxGer99/Ai-Health-tool" class="button">View on GitHub</a>
             <a href="#setup" class="button">Get Started</a>
+        </div>
+
+        <div class="alert info">
+            <strong>ℹ️ Important:</strong> This application requires a local server to run. It cannot function as a static GitHub Pages site because it needs a backend server for Fitbit OAuth authentication and LLM integration. Follow the setup instructions below to run it locally.
         </div>
 
         <h2>✨ Features</h2>
@@ -231,31 +248,39 @@ cd Ai-Health-tool</code></pre>
                 <strong>Register Fitbit Application</strong>
                 <p>Go to <a href="https://dev.fitbit.com/apps" target="_blank">Fitbit Developer Portal</a> and register a new app with:</p>
                 <ul>
+                    <li><strong>Application Name:</strong> Your app name</li>
+                    <li><strong>Application Website:</strong> http://localhost:3001</li>
                     <li><strong>Callback URL:</strong> <code>http://localhost:3001/auth/fitbit/callback</code></li>
                     <li><strong>OAuth 2.0 Type:</strong> Personal</li>
                     <li><strong>Access Type:</strong> Read Only</li>
                 </ul>
+                <p>Copy your <strong>Client ID</strong> and <strong>Client Secret</strong></p>
             </li>
             
             <li>
                 <strong>Setup Local LLM</strong>
                 <p>Install and run one of these:</p>
                 <ul>
-                    <li><strong>LM Studio:</strong> Download from <a href="https://lmstudio.ai/" target="_blank">lmstudio.ai</a></li>
-                    <li><strong>Ollama:</strong> Install from <a href="https://ollama.ai/" target="_blank">ollama.ai</a></li>
+                    <li><strong>LM Studio:</strong> Download from <a href="https://lmstudio.ai/" target="_blank">lmstudio.ai</a>, load a model (Llama 3.1 recommended), and start the server</li>
+                    <li><strong>Ollama:</strong> Install from <a href="https://ollama.ai/" target="_blank">ollama.ai</a> and run: <code>ollama run llama3.1</code></li>
                 </ul>
-                <p>Start the server (default: <code>http://localhost:1234</code>)</p>
+                <p>Default LLM server URL: <code>http://localhost:1234/v1</code></p>
             </li>
             
             <li>
                 <strong>Configure Environment Variables</strong>
                 <pre><code>cp .env.example .env</code></pre>
                 <p>Edit <code>.env</code> with your credentials:</p>
-                <pre><code>FITBIT_CLIENT_ID=your_client_id
-FITBIT_CLIENT_SECRET=your_client_secret
+                <pre><code>FITBIT_CLIENT_ID=your_fitbit_client_id
+FITBIT_CLIENT_SECRET=your_fitbit_client_secret
 FITBIT_REDIRECT_URI=http://localhost:3001/auth/fitbit/callback
+
+LLM_API_KEY=your_llm_api_key_here
 LLM_API_URL=http://localhost:1234/v1
-LLM_MODEL=local-model</code></pre>
+LLM_MODEL=local-model
+
+PORT=3001
+SESSION_SECRET=your_random_session_secret</code></pre>
             </li>
             
             <li>
@@ -298,6 +323,18 @@ LLM_MODEL=local-model</code></pre>
             <li><strong>Authentication:</strong> OAuth 2.0</li>
         </ul>
 
+        <h2>📁 Project Structure</h2>
+        <pre><code>.
+├── server.js           # Express server and API routes
+├── public/
+│   ├── index.html     # Frontend UI
+│   ├── styles.css     # Styling
+│   └── app.js         # Frontend JavaScript
+├── .env               # Environment variables (not in git)
+├── .env.example       # Environment template
+├── package.json       # Dependencies
+└── README.md          # Documentation</code></pre>
+
         <h2>🐛 Troubleshooting</h2>
         
         <h3>Fitbit OAuth Error</h3>
@@ -308,18 +345,33 @@ LLM_MODEL=local-model</code></pre>
             <li>Ensure your local LLM server is running</li>
             <li>Check the <code>LLM_API_URL</code> in your <code>.env</code> file</li>
             <li>Verify the model is loaded in LM Studio/Ollama</li>
+            <li>Test the endpoint: <code>curl http://localhost:1234/v1/models</code></li>
         </ul>
         
         <h3>No Data Displayed</h3>
         <ul>
             <li>Make sure you've granted all requested permissions to the Fitbit app</li>
             <li>Check that you have recent activity data in your Fitbit account</li>
-            <li>Look at the browser console for error messages</li>
+            <li>Look at the browser console (F12) for error messages</li>
+            <li>Check the terminal where the server is running for backend errors</li>
         </ul>
 
+        <h3>Port Already in Use</h3>
+        <p>If port 3001 is already in use, change the <code>PORT</code> in your <code>.env</code> file and update the Fitbit callback URL accordingly.</p>
+
         <div class="alert">
-            <strong>⚠️ Note:</strong> This application runs locally and requires a running backend server. For production deployment, you'll need to deploy both the frontend and backend to a hosting service with proper environment configuration.
+            <strong>⚠️ Note:</strong> This application requires a backend server and cannot run as a static site. You must run it locally or deploy to a server that supports Node.js applications (Heroku, Railway, Render, etc.).
         </div>
+
+        <h2>🚀 Deployment Options</h2>
+        <p>For production deployment, consider these platforms that support Node.js:</p>
+        <ul>
+            <li><strong>Railway:</strong> Easy deployment with automatic HTTPS</li>
+            <li><strong>Render:</strong> Free tier available with automatic deployments</li>
+            <li><strong>Heroku:</strong> Classic platform with add-ons</li>
+            <li><strong>DigitalOcean App Platform:</strong> Full-featured with scalability</li>
+        </ul>
+        <p>Remember to update your Fitbit app's callback URL to match your deployed URL!</p>
 
         <h2>📝 License</h2>
         <p>This project is licensed under the MIT License.</p>
@@ -328,7 +380,7 @@ LLM_MODEL=local-model</code></pre>
         
         <p style="text-align: center; color: #666;">
             Built with ❤️ for health and wellness | 
-            <a href="https://github.com/MaxGer99/Ai-Health-tool">GitHub</a>
+            <a href="https://github.com/MaxGer99/Ai-Health-tool">View on GitHub</a>
         </p>
     </div>
 </body>

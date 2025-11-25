@@ -4,7 +4,9 @@ A web application that integrates with Fitbit API to fetch your health data and 
 
 ## 📖 Documentation
 
-**[View Full Documentation on GitHub Pages](https://yourusername.github.io/fitbit-health-coach/docs/)**
+**[View Full Documentation on GitHub Pages](https://maxger99.github.io/Ai-Health-tool/)**
+
+> **Note:** This is a full-stack application that requires a backend server. GitHub Pages only hosts the documentation. To run the application, follow the setup instructions below.
 
 ## Features
 
@@ -125,11 +127,11 @@ This project is configured for GitHub Pages deployment:
 2. **Automatic Deployment:**
    - Push to `main` branch triggers automatic deployment
    - The workflow builds and deploys the documentation site
-   - Access your site at: `https://yourusername.github.io/fitbit-health-coach/`
+   - Access your site at: `https://maxger99.github.io/Ai-Health-tool/`
 
 3. **Documentation Site:**
-   - The `docs/` folder contains a standalone documentation page
-   - Accessible at: `https://yourusername.github.io/fitbit-health-coach/docs/`
+   - The documentation page provides setup instructions and API details
+   - Note: The actual application requires a backend server and cannot run on GitHub Pages
 
 ## License
 
