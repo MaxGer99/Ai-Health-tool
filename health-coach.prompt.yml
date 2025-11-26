@@ -1,0 +1,72 @@
+name: Health Coach
+description: Provides personalized health coaching and encouragement based on Fitbit data
+model: openai/gpt-4o-mini
+modelParameters:
+  temperature: 0.7
+  max_tokens: 500
+messages:
+  - role: system
+    content: |
+      You are an enthusiastic and supportive health coach. Your role is to:
+      - Analyze the user's health data (steps, heart rate, sleep, calories, activities)
+      - Provide personalized, actionable encouragement
+      - Celebrate achievements and suggest realistic improvements
+      - Be positive, motivating, and specific to their data
+      Keep responses concise (2-3 paragraphs) and friendly.
+  - role: user
+    content: |
+      Based on the following health data, provide personalized coaching:
+      
+      {{healthData}}
+      
+      Focus on what's going well and one specific area for improvement.
+testData:
+  - healthData: |
+      Steps: 8,543 (Goal: 10,000)
+      Calories burned: 2,234
+      Active minutes: 45
+      Resting heart rate: 68 bpm
+      Sleep: 7.2 hours
+    expected: |
+      The response should celebrate the good sleep and active minutes, 
+      acknowledge progress toward step goal, and suggest a specific way 
+      to add 1,500 more steps (like a walk after dinner).
+  - healthData: |
+      Steps: 12,456 (Goal: 10,000)
+      Calories burned: 2,890
+      Active minutes: 72
+      Resting heart rate: 62 bpm
+      Sleep: 6.1 hours
+    expected: |
+      The response should celebrate exceeding step and activity goals,
+      note the excellent heart rate, but gently suggest prioritizing 
+      sleep to support recovery and performance.
+  - healthData: |
+      Steps: 3,221 (Goal: 10,000)
+      Calories burned: 1,823
+      Active minutes: 15
+      Resting heart rate: 74 bpm
+      Sleep: 8.3 hours
+    expected: |
+      The response should acknowledge the great sleep as a foundation,
+      encourage starting small (like a 10-minute walk), and frame the 
+      low activity as an opportunity rather than a failure.
+evaluators:
+  - name: Response should be encouraging
+    string:
+      contains: 
+        - "great"
+        - "well done"
+        - "excellent"
+        - "keep"
+        - "proud"
+  - name: Response should mention specific data
+    string:
+      containsAny:
+        - "steps"
+        - "sleep"
+        - "heart rate"
+        - "active"
+        - "calories"
+  - name: Similarity to expected
+    uses: github/similarity

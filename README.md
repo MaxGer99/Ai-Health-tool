@@ -193,8 +193,19 @@ This repo includes `/.github/workflows/models-inference.yml` to call GitHub Mode
 
 ### Run
 
-- Manual: GitHub → Actions → “GitHub Models Inference Demo” → Run workflow → enter `prompt`.
+- Manual: GitHub → Actions → "GitHub Models Inference Demo" → Run workflow → enter `prompt`.
 - Scheduled: Wait for daily run; view logs and download artifact.
+
+## Reusable Prompt Files
+
+This repo includes `health-coach.prompt.yml`, a reusable prompt for health coaching based on Fitbit data:
+
+- View and run in GitHub: Repo → Models tab → Prompts → `health-coach.prompt.yml`
+- Edit mode: Test with custom input via the prompt editor.
+- Compare mode: Run evaluations with test data to compare model responses.
+- Evaluations: Validates that responses are encouraging, data-specific, and similar to expected coaching advice.
+
+To create more prompts, add `.prompt.yml` files anywhere in your repo. See [Storing prompts in GitHub repositories](https://docs.github.com/en/github-models/use-github-models/storing-prompts-in-github-repositories) for details.
 
 ## GitHub Pages Deployment
 
