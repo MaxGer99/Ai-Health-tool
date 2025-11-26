@@ -47,7 +47,7 @@
                     const res = await fetch('https://ai-health-tool-1.onrender.com/api/coach', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt })
+                        body: JSON.stringify({ prompt, demo: true })
                     });
                     if (!res.ok) throw new Error('LLM request failed');
                     const data = await res.json();

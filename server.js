@@ -218,12 +218,10 @@ app.get('/api/fitbit/activities', async (req, res) => {
 
 // Get AI coaching based on Fitbit data
 app.post('/api/coach', async (req, res) => {
+  const { fitbitData, prompt: directPrompt, demo } = req.body || {};
+  const useDemo = demo === true || demo === 'true' || process.env.DEMO_MODE === 'true';
+
   try {
-    const { fitbitData, prompt: directPrompt, demo } = req.body;
-
-    // If demo=true, always use demo data for prompt
-    const useDemo = demo === true || demo === 'true' || process.env.DEMO_MODE === 'true';
-
     const prompt = directPrompt && String(directPrompt).trim().length > 0
       ? directPrompt.trim()
       : createCoachingPrompt(
@@ -232,6 +230,13 @@ app.post('/api/coach', async (req, res) => {
 
     if (!prompt) {
       return res.status(400).json({ error: 'No prompt or data provided' });
+    }
+
+    // If no LLM configured and demo requested, return a mock response
+    if (useDemo && !LLM_API_URL) {
+      return res.json({
+        message: 'Great job staying committed! Based on today\'s demo stats, you\'re on track. Aim for short activity bursts (10–15 min) and hydrate well. A brisk walk or light stretching later will help you reach your goals—keep it up!'
+      });
     }
 
     // Call the LLM API
@@ -244,10 +249,7 @@ app.post('/api/coach', async (req, res) => {
             role: 'system',
             content: 'You are an enthusiastic and supportive health coach. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences).'
           },
-          {
-            role: 'user',
-            content: prompt
-          }
+          { role: 'user', content: prompt }
         ],
         temperature: 0.7,
         max_tokens: 300
@@ -256,9 +258,7 @@ app.post('/api/coach', async (req, res) => {
         headers: LLM_API_KEY ? {
           'Authorization': `Bearer ${LLM_API_KEY}`,
           'Content-Type': 'application/json'
-        } : {
-          'Content-Type': 'application/json'
-        }
+        } : { 'Content-Type': 'application/json' }
       }
     );
 
@@ -267,10 +267,12 @@ app.post('/api/coach', async (req, res) => {
 
   } catch (error) {
     console.error('LLM API error:', error.response?.data || error.message);
-    res.status(500).json({ 
-      error: 'Failed to get coaching response',
-      details: error.message 
-    });
+    if (useDemo) {
+      return res.json({
+        message: 'Here\'s a demo-friendly coaching tip: prioritize consistency over intensity. Take a 10-minute walk, add light mobility, and wind down with deep breathing. Small wins today compound into long-term progress—nice work!'
+      });
+    }
+    res.status(500).json({ error: 'Failed to get coaching response', details: error.message });
   }
 });
 
