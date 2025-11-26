@@ -12,14 +12,20 @@ const PORT = process.env.PORT || 3001;
 // Enable CORS for GitHub Pages and general usage
 const allowedOrigins = [
   'https://maxger99.github.io',
+  'http://localhost:3000',
+  'http://localhost:3001',
   process.env.ALLOWED_ORIGIN
 ].filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // allow same-origin/non-browser
+    // Allow requests with no origin (mobile apps, curl, Postman, etc.)
+    if (!origin) return callback(null, true);
+    // Allow GitHub Pages (with any path)
+    if (origin.startsWith('https://maxger99.github.io')) return callback(null, true);
+    // Allow configured origins
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error('Not allowed by CORS'));
+    return callback(null, true); // Temporarily allow all for debugging
   },
   credentials: true,
   methods: ['GET','POST','OPTIONS'],
