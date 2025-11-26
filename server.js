@@ -43,7 +43,7 @@ const FITBIT_REDIRECT_URI = process.env.FITBIT_REDIRECT_URI;
 const LLM_API_KEY = process.env.LLM_API_KEY || process.env.GITHUB_TOKEN;
 // Default to GitHub Models inference endpoint if not provided
 const LLM_API_URL = process.env.LLM_API_URL || 'https://models.github.ai/inference';
-const LLM_MODEL = process.env.LLM_MODEL || 'openai/gpt-4o-mini';
+const LLM_MODEL = process.env.LLM_MODEL || 'openai/gpt-5';
 
 // Rate limiting for LLM API calls
 let lastLLMCallTime = 0;

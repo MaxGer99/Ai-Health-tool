@@ -65,7 +65,7 @@ FITBIT_REDIRECT_URI=https://your-app-name.onrender.com/auth/fitbit/callback
 # GitHub Models Configuration (FREE!)
 GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 LLM_API_URL=https://models.github.ai/inference
-LLM_MODEL=openai/gpt-4o-mini
+LLM_MODEL=openai/gpt-5
 ```
 
 ### Model Options
@@ -74,8 +74,9 @@ Choose from [GitHub Models catalog](https://github.com/marketplace/models):
 
 | Model | ID | Best For |
 |-------|-----|----------|
-| GPT-4o mini | `openai/gpt-4o-mini` | Fast, efficient (recommended) |
+| GPT-5 | `openai/gpt-5` | Latest generation (requires access) |
 | GPT-4o | `openai/gpt-4o` | Advanced reasoning |
+| GPT-4o mini | `openai/gpt-4o-mini` | Fast, efficient |
 | Llama 3.1 405B | `meta/llama-3.1-405b-instruct` | Large open model |
 | Claude 3.5 Sonnet | `anthropic/claude-3.5-sonnet` | Long context |
 

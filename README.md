@@ -31,7 +31,7 @@ SESSION_SECRET=<generate a random string>
 # GitHub Models (recommended - free inference)
 GITHUB_TOKEN=your_github_pat_with_models_scope
 LLM_API_URL=https://models.github.ai/inference
-LLM_MODEL=openai/gpt-4o-mini
+LLM_MODEL=openai/gpt-5
 
 # Alternative: Other LLM providers
 # LLM_API_URL=https://api.groq.com/openai/v1
@@ -70,7 +70,7 @@ Sensitive values (API keys, client secrets) must NOT be committed to git. This r
    - **GitHub Models (recommended):**
      - `GITHUB_TOKEN` — Fine-grained PAT with `models` scope ([create here](https://github.com/settings/tokens))
      - `LLM_API_URL=https://models.github.ai/inference`
-     - `LLM_MODEL=openai/gpt-4o-mini` (or `openai/gpt-4o`, `meta/llama-3.1-405b-instruct`, etc.)
+   - `LLM_MODEL=openai/gpt-5` (or `openai/gpt-4o`, `openai/gpt-4o-mini`, `meta/llama-3.1-405b-instruct`, etc.)
    - **Alternative LLM providers:**
      - `LLM_API_KEY` — API key for your provider
      - `LLM_API_URL` — Provider endpoint
