@@ -337,8 +337,45 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    env: process.env.NODE_ENV 
+    env: process.env.NODE_ENV,
+    hasGithubToken: Boolean(process.env.GITHUB_TOKEN)
   });
+});
+
+// Verify GitHub token connectivity (does not expose the token)
+app.get('/api/github/check', async (req, res) => {
+  try {
+    const token = process.env.GITHUB_TOKEN;
+    if (!token) {
+      return res.json({ authenticated: false, tokenPresent: false });
+    }
+
+    const ghResp = await axios.get('https://api.github.com/user', {
+      headers: {
+        'Authorization': `token ${token}`,
+        'User-Agent': 'ai-health-tool'
+      }
+    });
+
+    // Extract scopes from headers if available
+    const scopesHeader = ghResp.headers['x-oauth-scopes'] || '';
+    const scopes = scopesHeader ? scopesHeader.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+    res.json({
+      authenticated: true,
+      tokenPresent: true,
+      login: ghResp.data?.login,
+      scopes
+    });
+  } catch (err) {
+    const status = err.response?.status;
+    res.status(200).json({
+      authenticated: false,
+      tokenPresent: Boolean(process.env.GITHUB_TOKEN),
+      error: status === 401 ? 'unauthorized' : 'request_failed',
+      status
+    });
+  }
 });
 
 // Start server
