@@ -37,22 +37,44 @@
             checkConfig();
 
             async function checkConfig() {
+                // Visual feedback while checking
+                if (checkConfigBtn) {
+                    checkConfigBtn.disabled = true;
+                    const originalText = checkConfigBtn.textContent;
+                    checkConfigBtn.textContent = 'Checking...';
+                    // restore after check completes
+                    var restoreText = () => { checkConfigBtn.disabled = false; checkConfigBtn.textContent = originalText; };
+                }
                 try {
                     const res = await fetch('https://ai-health-tool-1.onrender.com/health');
                     const data = await res.json();
+                    console.log('Health config:', data);
                     
                     if (!data.llmConfigured) {
                         configWarning.style.display = 'block';
                         configMessage.textContent = 'LLM not configured on Render. Set GITHUB_TOKEN, LLM_API_URL, and LLM_MODEL in environment variables, then redeploy.';
+                        const s = document.getElementById('config-status');
+                        if (s) s.textContent = `Last check: ${new Date().toLocaleTimeString()} • LLM not configured`;
                     } else if (!data.hasGithubToken) {
                         configWarning.style.display = 'block';
                         configMessage.textContent = 'GitHub token missing. Add GITHUB_TOKEN to Render environment.';
+                        const s = document.getElementById('config-status');
+                        if (s) s.textContent = `Last check: ${new Date().toLocaleTimeString()} • Token missing`;
                     } else {
                         configWarning.style.display = 'none';
+                        // Provide success feedback
+                        showError('✅ Configuration looks good.');
+                        const s = document.getElementById('config-status');
+                        if (s) s.textContent = `Last check: ${new Date().toLocaleTimeString()} • OK`;
                     }
                 } catch (err) {
-                    console.log('Could not check config:', err);
+                    console.error('Could not check config:', err);
+                    configWarning.style.display = 'block';
+                    configMessage.textContent = 'Unable to reach health endpoint. Render may be sleeping or CORS blocked.';
+                    const s = document.getElementById('config-status');
+                    if (s) s.textContent = `Last check: ${new Date().toLocaleTimeString()} • Error`;
                 }
+                if (typeof restoreText === 'function') restoreText();
             }
 
             checkConfigBtn.addEventListener('click', checkConfig);
@@ -69,14 +91,16 @@
                 }
                 submitBtn.disabled = true;
                 submitBtn.textContent = '⏳ Thinking...';
+                const originalSubmitText = 'Send Prompt';
                 coachingResponse.style.display = 'none';
                 errorSection.style.display = 'none';
                 
                 try {
+                    console.log('Sending coach request payload:', { prompt, demo: false });
                     const res = await fetch('https://ai-health-tool-1.onrender.com/api/coach', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt, demo: true })
+                        body: JSON.stringify({ prompt, demo: false })
                     });
                     if (!res.ok) {
                         const errorText = await res.text().catch(() => 'Unknown error');
@@ -89,6 +113,7 @@
                         throw new Error(`Server error (${res.status}). Check Render logs.`);
                     }
                     const data = await res.json();
+                    console.log('Coach response:', data);
                     if (data.error) {
                         throw new Error(data.error);
                     }
@@ -99,7 +124,7 @@
                     showError(err.message || 'Network error. Is Render sleeping?');
                 } finally {
                     submitBtn.disabled = false;
-                    submitBtn.textContent = 'Send Prompt';
+                    submitBtn.textContent = originalSubmitText;
                 }
             });
 
@@ -115,7 +140,7 @@
     <div class="container" style="display: flex; gap: 32px; align-items: flex-start;">
         <div style="flex: 1; min-width: 320px;">
             <header>
-                <h1>🏃‍♂️ AI Health Coach</h1>
+                <h1>AI Health Coach</h1>
                 <p>Welcome! Connect Fitbit and chat with the coach.</p>
             </header>
 
@@ -126,15 +151,16 @@
             </div>
 
             <div class="card" id="llm-section">
-                <h2>🤖 Ask the Coach</h2>
+                <h2>Ask the Coach</h2>
                 <p>Type a prompt for the coach. Example: "Create a weekly workout plan"</p>
                 <div id="config-warning" style="display:none; background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 12px; border-radius: 6px; margin-bottom: 12px; font-size: 0.9em;">
-                    ⚠️ <strong>Configuration issue:</strong> <span id="config-message"></span>
+                    <strong>Configuration issue:</strong> <span id="config-message"></span>
                 </div>
                 <textarea id="prompt-input" rows="4" placeholder="Enter your prompt..."></textarea>
                 <div style="margin-top:12px;">
                     <button id="submit-prompt" class="btn btn-secondary">Send Prompt</button>
                     <button id="check-config" class="btn" style="background: #6c757d; color: white; margin-left: 8px;">Check Config</button>
+                    <span id="config-status" style="margin-left: 10px; font-size: 0.9em; color: #555;"></span>
                 </div>
                 <div id="coaching-response" style="display:none; margin-top:16px;">
                     <div class="coaching-message">
@@ -143,7 +169,7 @@
                     </div>
                 </div>
                 <div id="error-section" class="error-card" style="display:none;">
-                    <h3>⚠️ Error</h3>
+                    <h3>Error</h3>
                     <p id="error-message"></p>
                 </div>
             </div>
