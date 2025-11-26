@@ -311,24 +311,13 @@ app.post('/api/coach', async (req, res) => {
   const useDemo = demo === true || demo === 'true' || process.env.DEMO_MODE === 'true';
 
   try {
-    // Build chat messages: send data context and the user request as separate messages
+    // Build chat messages: inject data context into the system prompt for maximum adherence
     const hasUserPrompt = directPrompt && String(directPrompt).trim().length > 0;
-    const chatMessages = [];
-    let promptForHistory = '';
-    if (fitbitData) {
-      const dataContext = createCoachingPrompt(fitbitData);
-      chatMessages.push({ role: 'user', content: dataContext });
-    }
-    if (hasUserPrompt) {
-      chatMessages.push({ role: 'user', content: directPrompt.trim() });
-      promptForHistory = directPrompt.trim();
-    } else if (!fitbitData) {
-      const generic = createCoachingPrompt(useDemo ? demoActivities() : null);
-      chatMessages.push({ role: 'user', content: generic });
-      promptForHistory = '(no user prompt)';
-    } else {
-      promptForHistory = '(data-only)';
-    }
+    let promptForHistory = hasUserPrompt ? directPrompt.trim() : (fitbitData ? '(data-only)' : '(no user prompt)');
+    const baseSystem = 'You are an enthusiastic and supportive health coach. Use any provided health data directly; do not ask the user to provide data that is already given. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences).';
+    const dataContext = fitbitData ? ('\n\nContext: The following health data is provided and must be used.\n' + createCoachingPrompt(fitbitData)) : '';
+    const systemContent = baseSystem + dataContext;
+    const userContent = hasUserPrompt ? directPrompt.trim() : 'Provide a brief, encouraging coaching tip using the data above.';
 
     if (!prompt) {
       return res.status(400).json({ error: 'No prompt or data provided' });
@@ -348,11 +337,8 @@ app.post('/api/coach', async (req, res) => {
               {
                 model: LLM_MODEL,
                 messages: [
-                  {
-                    role: 'system',
-                    content: 'You are an enthusiastic and supportive health coach. Use any provided health data directly; do not ask the user to provide data that is already given. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences).'
-                  },
-                  ...chatMessages
+                  { role: 'system', content: systemContent },
+                  { role: 'user', content: userContent }
                 ],
                 temperature: 0.7,
                 max_completion_tokens: 300
