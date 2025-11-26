@@ -233,32 +233,53 @@ app.post('/api/coach', async (req, res) => {
       return res.status(400).json({ error: 'No prompt or data provided' });
     }
 
-    // Call the LLM API
-    const llmResponse = await axios.post(
-      `${LLM_API_URL}/chat/completions`,
-      {
-        model: LLM_MODEL,
-        messages: [
+    // Call the LLM API with retry logic for rate limits
+    let llmResponse;
+    let retries = 2;
+    
+    while (retries >= 0) {
+      try {
+        llmResponse = await axios.post(
+          `${LLM_API_URL}/chat/completions`,
           {
-            role: 'system',
-            content: 'You are an enthusiastic and supportive health coach. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences).'
+            model: LLM_MODEL,
+            messages: [
+              {
+                role: 'system',
+                content: 'You are an enthusiastic and supportive health coach. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences).'
+              },
+              { role: 'user', content: prompt }
+            ],
+            temperature: 0.7,
+            max_completion_tokens: 300
           },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 300
-      },
-      {
-        headers: LLM_API_KEY ? {
-          'Authorization': `Bearer ${LLM_API_KEY}`,
-          'Content-Type': 'application/json',
-          'User-Agent': 'ai-health-tool'
-        } : {
-          'Content-Type': 'application/json',
-          'User-Agent': 'ai-health-tool'
+          {
+            headers: LLM_API_KEY ? {
+              'Authorization': `Bearer ${LLM_API_KEY}`,
+              'Content-Type': 'application/json',
+              'User-Agent': 'ai-health-tool'
+            } : {
+              'Content-Type': 'application/json',
+              'User-Agent': 'ai-health-tool'
+            }
+          }
+        );
+        break; // Success, exit retry loop
+      } catch (apiError) {
+        const status = apiError.response?.status;
+        const isRateLimit = status === 429 || (apiError.response?.data?.error && 
+          (apiError.response.data.error.includes('Too many requests') || 
+           apiError.response.data.error.includes('rate limit')));
+        
+        if (isRateLimit && retries > 0) {
+          console.log(`Rate limited, retrying in ${2 ** (2 - retries)} seconds...`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (2 ** (2 - retries))));
+          retries--;
+        } else {
+          throw apiError; // Not rate limit or out of retries
         }
       }
-    );
+    }
 
     const coachingMessage = llmResponse.data.choices?.[0]?.message?.content || 'No message generated.';
     res.json({ message: coachingMessage });
