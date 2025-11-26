@@ -47,7 +47,7 @@ const LLM_MODEL = process.env.LLM_MODEL || 'openai/gpt-5';
 
 // Rate limiting for LLM API calls
 let lastLLMCallTime = 0;
-const MIN_TIME_BETWEEN_CALLS = 2000; // 2 seconds between requests
+const MIN_TIME_BETWEEN_CALLS = Number(process.env.MIN_TIME_BETWEEN_CALLS || 5000); // default 5s between requests
 
 async function throttledLLMCall(requestFn) {
   const now = Date.now();
@@ -253,7 +253,7 @@ app.post('/api/coach', async (req, res) => {
 
     // Call the LLM API with retry logic for rate limits and throttling
     let llmResponse;
-    let retries = 2;
+    let retries = 3; // allow one more retry
     
     while (retries >= 0) {
       try {
@@ -292,8 +292,11 @@ app.post('/api/coach', async (req, res) => {
            apiError.response.data.error.includes('rate limit')));
         
         if (isRateLimit && retries > 0) {
-          console.log(`Rate limited, retrying in ${2 ** (2 - retries)} seconds...`);
-          await new Promise(resolve => setTimeout(resolve, 1000 * (2 ** (2 - retries))));
+          const baseDelay = 1000 * (2 ** (3 - retries));
+          const jitter = Math.floor(Math.random() * 400);
+          const delay = baseDelay + jitter;
+          console.log(`Rate limited, retrying in ${Math.ceil(delay/1000)}s (jitter ${jitter}ms)...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
           retries--;
         } else {
           throw apiError; // Not rate limit or out of retries
