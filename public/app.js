@@ -25,8 +25,9 @@ function setupEventListeners() {
         }
 
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Sending...';
+        submitBtn.textContent = '⏳ Thinking...';
         coachingResponse.style.display = 'none';
+        errorSection.style.display = 'none';
 
         try {
             const res = await fetch('/api/coach', {
@@ -38,7 +39,11 @@ function setupEventListeners() {
             if (!res.ok) {
                 const errorText = await res.text().catch(() => 'Unknown error');
                 console.error('API Error:', res.status, errorText);
-                throw new Error(`Server responded with ${res.status}`);
+                
+                if (res.status === 429 || errorText.includes('Too many requests')) {
+                    throw new Error('Rate limited. Please wait a moment and try again.');
+                }
+                throw new Error(`Server error (${res.status})`);
             }
 
             const data = await res.json();
@@ -49,7 +54,7 @@ function setupEventListeners() {
             coachingResponse.style.display = 'block';
         } catch (err) {
             console.error('Coaching error:', err);
-            showError(`Failed to get response: ${err.message}`);
+            showError(err.message || 'Network error');
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Send Prompt';
