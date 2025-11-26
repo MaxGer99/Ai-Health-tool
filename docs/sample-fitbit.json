@@ -1,0 +1,22 @@
+{
+  "activities": {
+    "summary": {
+      "steps": 8234,
+      "caloriesOut": 2150,
+      "fairlyActiveMinutes": 34,
+      "veryActiveMinutes": 18,
+      "distance": 6.2
+    },
+    "goals": {
+      "steps": 10000
+    }
+  },
+  "heart": {
+    "restingHeartRate": 62
+  },
+  "sleep": {
+    "totalMinutesAsleep": 412,
+    "totalTimeInBed": 460
+  },
+  "date": "2025-11-25"
+}

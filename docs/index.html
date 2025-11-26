@@ -35,6 +35,7 @@
             const coachingResponse = document.getElementById('coaching-response');
             const coachingText = document.getElementById('coaching-text');
             const checkConfigBtn = document.getElementById('check-config');
+            const sampleBtn = document.getElementById('sample-fitbit');
             const configWarning = document.getElementById('config-warning');
             const configMessage = document.getElementById('config-message');
 
@@ -133,6 +134,24 @@
                 }
             }
 
+            // Load sample data from docs/sample-fitbit.json
+            if (sampleBtn) {
+                sampleBtn.addEventListener('click', async () => {
+                    try {
+                        const res = await fetch('sample-fitbit.json');
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        const json = await res.json();
+                        uploadedFitbitData = json;
+                        const summary = buildFitbitSummary(json);
+                        fitbitSummary.textContent = summary;
+                        fitbitPreview.style.display = 'block';
+                        showError('Sample Fitbit data loaded.');
+                    } catch (e) {
+                        showError('Could not load sample data.');
+                    }
+                });
+            }
+
             async function loadHistory() {
                 try {
                     const res = await fetch('https://ai-health-tool-1.onrender.com/api/responses');
@@ -196,7 +215,7 @@
                     return;
                 }
                 submitBtn.disabled = true;
-                submitBtn.textContent = '⏳ Thinking...';
+                submitBtn.textContent = 'Thinking...';
                 const originalSubmitText = 'Send Prompt';
                 coachingResponse.style.display = 'none';
                 errorSection.style.display = 'none';
