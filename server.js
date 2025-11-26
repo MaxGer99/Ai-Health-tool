@@ -423,8 +423,34 @@ function createCoachingPrompt(data) {
     return 'You are a supportive health coach. Provide a brief, encouraging tip tailored for a typical adult to stay active today (3–5 sentences). Include one actionable step and a gentle motivational note.';
   }
   const { activities, heart, sleep } = data;
-  
-  let prompt = 'Here is the user\'s health data for today:\n\n';
+
+  let prompt = '';
+  // If weekly data exists, provide a short weekly summary first
+  if (Array.isArray(data.days) && data.days.length) {
+    const days = data.days;
+    let totalSteps = 0, totalActive = 0, totalSleepMin = 0, rhrSum = 0, rhrCount = 0;
+    days.forEach(d => {
+      const s = d.activities?.summary || {};
+      totalSteps += s.steps || 0;
+      totalActive += (s.fairlyActiveMinutes || 0) + (s.veryActiveMinutes || 0);
+      const sm = d.sleep?.summary?.totalMinutesAsleep;
+      if (typeof sm === 'number') totalSleepMin += sm;
+      const rhr = d.heart?.['activities-heart']?.[0]?.value?.restingHeartRate;
+      if (typeof rhr === 'number') { rhrSum += rhr; rhrCount++; }
+    });
+    const avgSteps = Math.round(totalSteps / days.length);
+    const avgActive = Math.round(totalActive / days.length);
+    const avgSleepHrs = (totalSleepMin / days.length / 60).toFixed(1);
+    const avgRHR = rhrCount ? Math.round(rhrSum / rhrCount) : 'n/a';
+    prompt += 'Weekly overview (last 7 days):\n';
+    prompt += `- Total steps: ${totalSteps.toLocaleString()} (avg ${avgSteps.toLocaleString()}/day)\n`;
+    prompt += `- Avg active minutes/day: ${avgActive}\n`;
+    prompt += `- Avg sleep/day: ${avgSleepHrs} h\n`;
+    if (avgRHR !== 'n/a') prompt += `- Avg resting heart rate: ${avgRHR} bpm\n`;
+    prompt += '\nToday\'s details:\n';
+  } else {
+    prompt += 'Here is the user\'s health data for today:\n\n';
+  }
   
   // Steps
   if (activities?.summary?.steps) {

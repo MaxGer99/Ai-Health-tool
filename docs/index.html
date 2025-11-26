@@ -36,6 +36,7 @@
             const coachingText = document.getElementById('coaching-text');
             const checkConfigBtn = document.getElementById('check-config');
             const sampleBtn = document.getElementById('sample-fitbit');
+            const generateBtn = document.getElementById('generate-dummy');
             const configWarning = document.getElementById('config-warning');
             const configMessage = document.getElementById('config-message');
 
@@ -112,8 +113,42 @@
 
             function buildFitbitSummary(data) {
                 if (!data) return 'No data loaded.';
-                let out = '';
                 try {
+                    // Weekly dataset support: data.days = [ { date, activities, heart, sleep } ]
+                    if (Array.isArray(data.days) && data.days.length) {
+                        const days = data.days;
+                        const range = `${days[0].date} → ${days[days.length - 1].date}`;
+                        let totalSteps = 0;
+                        let totalActive = 0;
+                        let totalSleepMin = 0;
+                        let rhrSum = 0, rhrCount = 0;
+                        days.forEach(d => {
+                            const s = d.activities?.summary || {};
+                            totalSteps += s.steps || 0;
+                            totalActive += (s.fairlyActiveMinutes || 0) + (s.veryActiveMinutes || 0);
+                            const sl = d.sleep?.summary?.totalMinutesAsleep;
+                            if (typeof sl === 'number') totalSleepMin += sl;
+                            const rhr = d.heart?.['activities-heart']?.[0]?.value?.restingHeartRate;
+                            if (typeof rhr === 'number') { rhrSum += rhr; rhrCount++; }
+                        });
+                        const avgSteps = Math.round(totalSteps / days.length);
+                        const avgActive = Math.round(totalActive / days.length);
+                        const avgSleepHrs = (totalSleepMin / days.length / 60).toFixed(1);
+                        const avgRHR = rhrCount ? Math.round(rhrSum / rhrCount) : 'n/a';
+                        const last = days[days.length - 1];
+                        const lastSum = last.activities?.summary || {};
+                        const lastSteps = lastSum.steps || 0;
+                        return (
+                            `Week: ${range}\n` +
+                            `Total Steps: ${totalSteps.toLocaleString()} • Avg/Day: ${avgSteps.toLocaleString()}\n` +
+                            `Avg Active Minutes/Day: ${avgActive}\n` +
+                            `Avg Sleep/Day: ${avgSleepHrs} h • Avg RHR: ${avgRHR}\n` +
+                            `Latest Day (${last.date}) Steps: ${lastSteps.toLocaleString()}`
+                        );
+                    }
+
+                    // Single day fallback (accepts multiple shapes)
+                    let out = '';
                     const activities = data.activities?.summary || data.summary || {};
                     if (activities.steps) out += `Steps: ${activities.steps}\n`;
                     if (activities.caloriesOut) out += `Calories: ${activities.caloriesOut}\n`;
@@ -121,13 +156,14 @@
                     const very = activities.veryActiveMinutes || 0;
                     const activeTotal = fairly + very;
                     if (activeTotal) out += `Active Minutes: ${activeTotal} (Fairly: ${fairly}, Very: ${very})\n`;
+                    const distances = activities.distances;
+                    if (Array.isArray(distances) && distances[0]?.distance) out += `Distance: ${distances[0].distance} miles\n`;
                     if (activities.distance) out += `Distance: ${activities.distance} km\n`;
-                    const heart = data.heart || data.heartRate || {};
-                    if (heart.restingHeartRate) out += `Resting HR: ${heart.restingHeartRate}\n`;
-                    const sleep = data.sleep || {};
-                    if (sleep.totalMinutesAsleep || sleep.totalTimeInBed) {
-                        out += `Sleep: ${sleep.totalMinutesAsleep || 0} min asleep / ${sleep.totalTimeInBed || 0} in bed\n`;
-                    }
+                    const rhr = data.heart?.['activities-heart']?.[0]?.value?.restingHeartRate || data.heart?.restingHeartRate;
+                    if (rhr) out += `Resting HR: ${rhr}\n`;
+                    const sleepMin = data.sleep?.summary?.totalMinutesAsleep || data.sleep?.totalMinutesAsleep;
+                    const inBed = data.sleep?.summary?.totalTimeInBed || data.sleep?.totalTimeInBed;
+                    if (sleepMin || inBed) out += `Sleep: ${sleepMin || 0} min asleep / ${inBed || 0} in bed\n`;
                     return out.trim() || 'Data parsed but no key metrics found.';
                 } catch (e) {
                     return 'Failed to parse summary.';
@@ -150,6 +186,74 @@
                         showError('Could not load sample data.');
                     }
                 });
+            }
+
+            // Generate dummy Fitbit data and download as JSON
+            if (generateBtn) {
+                generateBtn.addEventListener('click', () => {
+                    const data = generateDummyFitbitData();
+                    uploadedFitbitData = data;
+                    const summary = buildFitbitSummary(data);
+                    fitbitSummary.textContent = summary;
+                    fitbitPreview.style.display = 'block';
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `fitbit-dummy-${new Date().toISOString().slice(0,10)}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    a.remove();
+                    showError('Dummy Fitbit data generated and downloaded.');
+                });
+            }
+
+            function generateDummyFitbitData() {
+                const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+                const toISODate = (d) => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+                const today = new Date();
+                const days = [];
+                for (let i = 6; i >= 0; i--) {
+                    const dateObj = new Date(today);
+                    dateObj.setDate(today.getDate() - i);
+                    const date = toISODate(dateObj);
+                    const steps = randInt(3500, 14000);
+                    const fairly = randInt(10, 60);
+                    const very = randInt(5, 45);
+                    const activeTotal = fairly + very;
+                    const caloriesOut = randInt(1700, 3200);
+                    const miles = parseFloat((steps / 2000).toFixed(2));
+                    const restingHeartRate = randInt(55, 75);
+                    const totalMinutesAsleep = randInt(320, 520);
+                    const totalTimeInBed = totalMinutesAsleep + randInt(10, 80);
+                    const day = {
+                        date,
+                        activities: {
+                            summary: {
+                                steps,
+                                caloriesOut,
+                                fairlyActiveMinutes: fairly,
+                                veryActiveMinutes: very,
+                                distances: [{ activity: 'total', distance: miles }]
+                            },
+                            goals: { steps: 10000, activeMinutes: 30 }
+                        },
+                        heart: { 'activities-heart': [{ dateTime: date, value: { restingHeartRate } }] },
+                        sleep: { summary: { totalMinutesAsleep, totalTimeInBed } }
+                    };
+                    days.push(day);
+                }
+                const latest = days[days.length - 1];
+                return {
+                    days,
+                    weekStart: days[0].date,
+                    weekEnd: days[days.length - 1].date,
+                    // Expose latest day at top-level for compatibility with server prompt builder
+                    activities: latest.activities,
+                    heart: latest.heart,
+                    sleep: latest.sleep
+                };
             }
 
             async function loadHistory() {
@@ -290,6 +394,8 @@
                 <div style="display:flex; gap:12px; flex-wrap:wrap;">
                     <button id="connect-btn" class="btn btn-primary">Connect with Fitbit</button>
                     <button id="upload-fitbit" class="btn btn-secondary">Upload Fitbit Data (JSON)</button>
+                    <button id="sample-fitbit" class="btn btn-secondary">Load Sample Data</button>
+                    <button id="generate-dummy" class="btn btn-secondary">Generate Dummy Data</button>
                     <input type="file" id="fitbit-file" accept="application/json" style="display:none;" />
                 </div>
                 <div id="fitbit-preview" style="display:none; margin-top:14px; background:#f4f6f9; border:1px solid #e0e0e0; padding:12px; border-radius:8px;">
