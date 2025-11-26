@@ -314,10 +314,10 @@ app.post('/api/coach', async (req, res) => {
     // Build chat messages: inject data context into the system prompt for maximum adherence
     const hasUserPrompt = directPrompt && String(directPrompt).trim().length > 0;
     let promptForHistory = hasUserPrompt ? directPrompt.trim() : (fitbitData ? '(data-only)' : '(no user prompt)');
-    const baseSystem = 'You are an enthusiastic and supportive health coach. Use any provided health data directly; do not ask the user to provide data that is already given. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences).';
+    const baseSystem = 'You are an enthusiastic and supportive health coach. You MUST use any provided health data directly. Do NOT ask the user to provide data that is already given. Do NOT request clarifications about steps, activity, sleep, or heart rate when those values are present. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences). Start with a one-line summary that cites at least one concrete metric (e.g., average steps, active minutes, sleep hours, or resting HR) from the provided data before giving recommendations.';
     const dataContext = fitbitData ? ('\n\nContext: The following health data is provided and must be used.\n' + createCoachingPrompt(fitbitData)) : '';
     const systemContent = baseSystem + dataContext;
-    const userContent = hasUserPrompt ? directPrompt.trim() : 'Provide a brief, encouraging coaching tip using the data above.';
+    const userContent = (hasUserPrompt ? directPrompt.trim() : 'Provide a brief, encouraging coaching tip using the data above.') + '\n\nImportant: Do not ask me to provide any additional data. Use the data above and include at least one numeric metric in your response.';
 
     if (!prompt) {
       return res.status(400).json({ error: 'No prompt or data provided' });
@@ -340,7 +340,7 @@ app.post('/api/coach', async (req, res) => {
                   { role: 'system', content: systemContent },
                   { role: 'user', content: userContent }
                 ],
-                temperature: 0.7,
+                temperature: 0.2,
                 max_completion_tokens: 300
               },
               {
