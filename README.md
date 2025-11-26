@@ -27,9 +27,16 @@ FITBIT_CLIENT_ID=your_fitbit_client_id
 FITBIT_CLIENT_SECRET=your_fitbit_client_secret
 FITBIT_REDIRECT_URI=https://your-app-name.onrender.com/auth/fitbit/callback
 SESSION_SECRET=<generate a random string>
-LLM_API_URL=https://api.groq.com/openai/v1 (or your chosen LLM)
-LLM_API_KEY=your_llm_api_key
-LLM_MODEL=llama-3.1-70b-versatile (or your chosen model)
+
+# GitHub Models (recommended - free inference)
+GITHUB_TOKEN=your_github_pat_with_models_scope
+LLM_API_URL=https://models.github.ai/inference
+LLM_MODEL=openai/gpt-4o-mini
+
+# Alternative: Other LLM providers
+# LLM_API_URL=https://api.groq.com/openai/v1
+# LLM_API_KEY=your_llm_api_key
+# LLM_MODEL=llama-3.1-70b-versatile
 ```
 
 If your upstream services require IP allowlisting (e.g., managed databases or LLM providers), add Render's outbound ranges:
@@ -60,15 +67,20 @@ Sensitive values (API keys, client secrets) must NOT be committed to git. This r
    - `FITBIT_CLIENT_SECRET`
    - `FITBIT_REDIRECT_URI`
    - `SESSION_SECRET`
-   - `LLM_API_URL`
-   - `LLM_API_KEY`
-   - `LLM_MODEL`
-   - `GITHUB_TOKEN` (or use `LLM_API_KEY`) for GitHub Models inference
+   - **GitHub Models (recommended):**
+     - `GITHUB_TOKEN` — Fine-grained PAT with `models` scope ([create here](https://github.com/settings/tokens))
+     - `LLM_API_URL=https://models.github.ai/inference`
+     - `LLM_MODEL=openai/gpt-4o-mini` (or `openai/gpt-4o`, `meta/llama-3.1-405b-instruct`, etc.)
+   - **Alternative LLM providers:**
+     - `LLM_API_KEY` — API key for your provider
+     - `LLM_API_URL` — Provider endpoint
+     - `LLM_MODEL` — Model identifier
 
 Best practices:
 - Keep `.env` files out of git (already configured)
 - Use different secrets for dev vs prod
 - Rotate keys if accidentally committed
+- GitHub Models is free for inference and requires only a GitHub PAT
 
 ## Features
 
