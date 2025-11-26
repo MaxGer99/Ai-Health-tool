@@ -311,18 +311,23 @@ app.post('/api/coach', async (req, res) => {
   const useDemo = demo === true || demo === 'true' || process.env.DEMO_MODE === 'true';
 
   try {
-    let prompt;
+    // Build chat messages: send data context and the user request as separate messages
     const hasUserPrompt = directPrompt && String(directPrompt).trim().length > 0;
-    if (hasUserPrompt && fitbitData) {
-      // Combine structured data summary with user request for better targeting
-      const dataSummary = createCoachingPrompt(fitbitData);
-      prompt = `${dataSummary}\n\nUser request: ${directPrompt.trim()}`;
-    } else if (hasUserPrompt) {
-      prompt = directPrompt.trim();
+    const chatMessages = [];
+    let promptForHistory = '';
+    if (fitbitData) {
+      const dataContext = createCoachingPrompt(fitbitData);
+      chatMessages.push({ role: 'user', content: dataContext });
+    }
+    if (hasUserPrompt) {
+      chatMessages.push({ role: 'user', content: directPrompt.trim() });
+      promptForHistory = directPrompt.trim();
+    } else if (!fitbitData) {
+      const generic = createCoachingPrompt(useDemo ? demoActivities() : null);
+      chatMessages.push({ role: 'user', content: generic });
+      promptForHistory = '(no user prompt)';
     } else {
-      prompt = createCoachingPrompt(
-        fitbitData || (useDemo ? demoActivities() : null)
-      );
+      promptForHistory = '(data-only)';
     }
 
     if (!prompt) {
@@ -347,7 +352,7 @@ app.post('/api/coach', async (req, res) => {
                     role: 'system',
                     content: 'You are an enthusiastic and supportive health coach. Use any provided health data directly; do not ask the user to provide data that is already given. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences).'
                   },
-                  { role: 'user', content: prompt }
+                  ...chatMessages
                 ],
                 temperature: 0.7,
                 max_completion_tokens: 300
@@ -390,7 +395,7 @@ app.post('/api/coach', async (req, res) => {
 
     let coachingMessage = llmResponse.data.choices?.[0]?.message?.content || 'No message generated.';
     coachingMessage = stripEmojis(coachingMessage);
-    saveResponse({ timestamp: new Date().toISOString(), prompt, message: coachingMessage, dataSynopsis });
+    saveResponse({ timestamp: new Date().toISOString(), prompt: promptForHistory, message: coachingMessage, dataSynopsis });
     res.json({ message: coachingMessage, queuePosition, dataSynopsis });
 
   } catch (error) {
@@ -405,7 +410,7 @@ app.post('/api/coach', async (req, res) => {
       let fallback = 'Rate limit reached. Try again in a few minutes. Meanwhile, here is a tip: stay consistent with small daily actions - a 10-minute walk, proper hydration, and light stretching can build lasting momentum.';
       fallback = stripEmojis(fallback);
       const dataSynopsis = buildDataSynopsis(fitbitData);
-      saveResponse({ timestamp: new Date().toISOString(), prompt, message: fallback, rateLimited: true, dataSynopsis });
+      saveResponse({ timestamp: new Date().toISOString(), prompt: promptForHistory, message: fallback, rateLimited: true, dataSynopsis });
       return res.json({ message: fallback, rateLimited: true, dataSynopsis });
     }
     
@@ -414,7 +419,7 @@ app.post('/api/coach', async (req, res) => {
       let demoMsg = 'Here is a quick coaching tip while the AI is warming up: keep it consistent today. Add a 10-15 minute walk, hydrate, and wind down with light stretching. Small steps build big momentum - nice work!';
       demoMsg = stripEmojis(demoMsg);
       const dataSynopsis = buildDataSynopsis(fitbitData);
-      saveResponse({ timestamp: new Date().toISOString(), prompt, message: demoMsg, demo: true, dataSynopsis });
+      saveResponse({ timestamp: new Date().toISOString(), prompt: promptForHistory, message: demoMsg, demo: true, dataSynopsis });
       return res.json({ message: demoMsg, dataSynopsis });
     }
     saveResponse({ timestamp: new Date().toISOString(), prompt, message: 'Failed to get coaching response', error: true });
