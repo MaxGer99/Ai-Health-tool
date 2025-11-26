@@ -96,6 +96,16 @@
                 errorSection.style.display = 'none';
                 
                 try {
+                    // Check queue status before sending request
+                    try {
+                        const qs = await fetch('https://ai-health-tool-1.onrender.com/api/queue/status');
+                        if (qs.ok) {
+                            const q = await qs.json();
+                            if (q.queueDepth > 0) {
+                                showError(`Queued, position ${q.queueDepth}. Processing soon...`);
+                            }
+                        }
+                    } catch (_) {}
                     console.log('Sending coach request payload:', { prompt, demo: false });
                     const res = await fetch('https://ai-health-tool-1.onrender.com/api/coach', {
                         method: 'POST',
@@ -114,6 +124,9 @@
                     }
                     const data = await res.json();
                     console.log('Coach response:', data);
+                    if (typeof data.queuePosition === 'number' && data.queuePosition > 0) {
+                        showError(`Request was queued (position ${data.queuePosition}).`);
+                    }
                     if (data.error) {
                         throw new Error(data.error);
                     }

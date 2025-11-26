@@ -49,6 +49,44 @@ const LLM_MODEL = process.env.LLM_MODEL || 'openai/gpt-5';
 let lastLLMCallTime = 0;
 const MIN_TIME_BETWEEN_CALLS = Number(process.env.MIN_TIME_BETWEEN_CALLS || 5000); // default 5s between requests
 
+// Simple FIFO queue to serialize LLM requests
+const llmQueue = [];
+let llmProcessing = false;
+
+function enqueueLLMTask(taskFn) {
+  return new Promise((resolve, reject) => {
+    llmQueue.push({ taskFn, resolve, reject });
+    processLLMQueue();
+  });
+}
+
+async function processLLMQueue() {
+  if (llmProcessing) return;
+  llmProcessing = true;
+  try {
+    while (llmQueue.length > 0) {
+      const { taskFn, resolve, reject } = llmQueue.shift();
+      try {
+        const result = await taskFn();
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    }
+  } finally {
+    llmProcessing = false;
+  }
+}
+
+// Queue status endpoint
+app.get('/api/queue/status', (req, res) => {
+  res.json({
+    queueDepth: llmQueue.length,
+    processing: llmProcessing,
+    minDelayMs: MIN_TIME_BETWEEN_CALLS
+  });
+});
+
 async function throttledLLMCall(requestFn) {
   const now = Date.now();
   const timeSinceLastCall = now - lastLLMCallTime;
@@ -253,36 +291,39 @@ app.post('/api/coach', async (req, res) => {
 
     // Call the LLM API with retry logic for rate limits and throttling
     let llmResponse;
+    const queuePosition = llmQueue.length; // snapshot before enqueue
     let retries = 3; // allow one more retry
     
     while (retries >= 0) {
       try {
-        llmResponse = await throttledLLMCall(async () => {
-          return await axios.post(
-            `${LLM_API_URL}/chat/completions`,
-            {
-              model: LLM_MODEL,
-              messages: [
-                {
-                  role: 'system',
-                  content: 'You are an enthusiastic and supportive health coach. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences).'
-                },
-                { role: 'user', content: prompt }
-              ],
-              temperature: 0.7,
-              max_completion_tokens: 300
-            },
-            {
-              headers: LLM_API_KEY ? {
-                'Authorization': `Bearer ${LLM_API_KEY}`,
-                'Content-Type': 'application/json',
-                'User-Agent': 'ai-health-tool'
-              } : {
-                'Content-Type': 'application/json',
-                'User-Agent': 'ai-health-tool'
+        llmResponse = await enqueueLLMTask(async () => {
+          return await throttledLLMCall(async () => {
+            return await axios.post(
+              `${LLM_API_URL}/chat/completions`,
+              {
+                model: LLM_MODEL,
+                messages: [
+                  {
+                    role: 'system',
+                    content: 'You are an enthusiastic and supportive health coach. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences).'
+                  },
+                  { role: 'user', content: prompt }
+                ],
+                temperature: 0.7,
+                max_completion_tokens: 300
+              },
+              {
+                headers: LLM_API_KEY ? {
+                  'Authorization': `Bearer ${LLM_API_KEY}`,
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'ai-health-tool'
+                } : {
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'ai-health-tool'
+                }
               }
-            }
-          );
+            );
+          });
         });
         break; // Success, exit retry loop
       } catch (apiError) {
@@ -305,7 +346,7 @@ app.post('/api/coach', async (req, res) => {
     }
 
     const coachingMessage = llmResponse.data.choices?.[0]?.message?.content || 'No message generated.';
-    res.json({ message: coachingMessage });
+    res.json({ message: coachingMessage, queuePosition });
 
   } catch (error) {
     console.error('LLM API error:', error.response?.data || error.message);
