@@ -39,9 +39,10 @@ const FITBIT_CLIENT_ID = process.env.FITBIT_CLIENT_ID;
 const FITBIT_CLIENT_SECRET = process.env.FITBIT_CLIENT_SECRET;
 const FITBIT_REDIRECT_URI = process.env.FITBIT_REDIRECT_URI;
 
-// LLM Configuration
-const LLM_API_KEY = process.env.LLM_API_KEY;
-const LLM_API_URL = process.env.LLM_API_URL || 'http://localhost:1234/v1';
+// LLM Configuration (prefer LLM_API_KEY, fallback to GITHUB_TOKEN for GitHub Models)
+const LLM_API_KEY = process.env.LLM_API_KEY || process.env.GITHUB_TOKEN;
+// Default to GitHub Models OpenAI-compatible path if not provided
+const LLM_API_URL = process.env.LLM_API_URL || 'https://api.github.com/v1';
 const LLM_MODEL = process.env.LLM_MODEL || 'local-model';
 
 // Helper function to make Fitbit API calls
@@ -232,13 +233,6 @@ app.post('/api/coach', async (req, res) => {
       return res.status(400).json({ error: 'No prompt or data provided' });
     }
 
-    // If no LLM configured and demo requested, return a mock response
-    if (useDemo && !LLM_API_URL) {
-      return res.json({
-        message: 'Great job staying committed! Based on today\'s demo stats, you\'re on track. Aim for short activity bursts (10–15 min) and hydrate well. A brisk walk or light stretching later will help you reach your goals—keep it up!'
-      });
-    }
-
     // Call the LLM API
     const llmResponse = await axios.post(
       `${LLM_API_URL}/chat/completions`,
@@ -257,8 +251,12 @@ app.post('/api/coach', async (req, res) => {
       {
         headers: LLM_API_KEY ? {
           'Authorization': `Bearer ${LLM_API_KEY}`,
-          'Content-Type': 'application/json'
-        } : { 'Content-Type': 'application/json' }
+          'Content-Type': 'application/json',
+          'User-Agent': 'ai-health-tool'
+        } : {
+          'Content-Type': 'application/json',
+          'User-Agent': 'ai-health-tool'
+        }
       }
     );
 
@@ -267,12 +265,13 @@ app.post('/api/coach', async (req, res) => {
 
   } catch (error) {
     console.error('LLM API error:', error.response?.data || error.message);
+    // If LLM fails, return a graceful demo-friendly message when demo was requested
     if (useDemo) {
       return res.json({
-        message: 'Here\'s a demo-friendly coaching tip: prioritize consistency over intensity. Take a 10-minute walk, add light mobility, and wind down with deep breathing. Small wins today compound into long-term progress—nice work!'
+        message: 'Here’s a quick coaching tip while the AI is warming up: keep it consistent today. Add a 10–15 minute walk, hydrate, and wind down with light stretching. Small steps build big momentum—nice work!'
       });
     }
-    res.status(500).json({ error: 'Failed to get coaching response', details: error.message });
+    res.status(502).json({ error: 'Failed to get coaching response', details: error.message });
   }
 });
 
@@ -340,7 +339,8 @@ app.get('/health', (req, res) => {
     status: 'ok', 
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV,
-    hasGithubToken: Boolean(process.env.GITHUB_TOKEN)
+    hasGithubToken: Boolean(process.env.GITHUB_TOKEN),
+    llmConfigured: Boolean(process.env.LLM_API_URL && process.env.LLM_MODEL && process.env.LLM_API_KEY)
   });
 });
 
@@ -386,4 +386,6 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📊 Fitbit OAuth redirect: ${FITBIT_REDIRECT_URI}`);
   console.log(`🤖 LLM API URL: ${LLM_API_URL}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  const llmConfigured = Boolean(LLM_API_URL && LLM_MODEL && LLM_API_KEY);
+  console.log(`🧠 LLM configured: ${llmConfigured ? 'yes' : 'no'} (model: ${LLM_MODEL})`);
 });
