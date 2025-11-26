@@ -1,6 +1,6 @@
 name: Health Coach
 description: Provides personalized health coaching and encouragement based on Fitbit data
-model: openai/gpt-5
+model: openai/gpt-4o-mini
 modelParameters:
   temperature: 0.7
   max_completion_tokens: 500

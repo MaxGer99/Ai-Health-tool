@@ -43,7 +43,7 @@ const FITBIT_REDIRECT_URI = process.env.FITBIT_REDIRECT_URI;
 const LLM_API_KEY = process.env.LLM_API_KEY || process.env.GITHUB_TOKEN;
 // Default to GitHub Models inference endpoint if not provided
 const LLM_API_URL = process.env.LLM_API_URL || 'https://models.github.ai/inference';
-const LLM_MODEL = process.env.LLM_MODEL || 'openai/gpt-5';
+const LLM_MODEL = process.env.LLM_MODEL || 'openai/gpt-4o-mini';
 
 // Rate limiting for LLM API calls
 let lastLLMCallTime = 0;
@@ -292,7 +292,7 @@ app.post('/api/coach', async (req, res) => {
     // Call the LLM API with retry logic for rate limits and throttling
     let llmResponse;
     const queuePosition = llmQueue.length; // snapshot before enqueue
-    let retries = 3; // allow one more retry
+    let retries = 1; // minimize upstream retries to avoid repeated 429s
     
     while (retries >= 0) {
       try {
@@ -362,6 +362,9 @@ app.post('/api/coach', async (req, res) => {
 
 // Helper function to create coaching prompt
 function createCoachingPrompt(data) {
+  if (!data) {
+    return 'You are a supportive health coach. Provide a brief, encouraging tip tailored for a typical adult to stay active today (3–5 sentences). Include one actionable step and a gentle motivational note.';
+  }
   const { activities, heart, sleep } = data;
   
   let prompt = 'Here is the user\'s health data for today:\n\n';
