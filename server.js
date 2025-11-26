@@ -350,10 +350,23 @@ app.post('/api/coach', async (req, res) => {
 
   } catch (error) {
     console.error('LLM API error:', error.response?.data || error.message);
+    
+    // Check if it's a rate limit error
+    const isRateLimit = error.response?.status === 429 || 
+      (error.response?.data && JSON.stringify(error.response.data).includes('Too many requests'));
+    
+    if (isRateLimit) {
+      console.log('Rate limit exceeded, returning helpful fallback message');
+      return res.json({
+        message: 'Rate limit reached. Try again in a few minutes. Meanwhile, here\'s a tip: stay consistent with small daily actions - a 10-minute walk, proper hydration, and light stretching can build lasting momentum.',
+        rateLimited: true
+      });
+    }
+    
     // If LLM fails, return a graceful demo-friendly message when demo was requested
     if (useDemo) {
       return res.json({
-        message: 'Here’s a quick coaching tip while the AI is warming up: keep it consistent today. Add a 10–15 minute walk, hydrate, and wind down with light stretching. Small steps build big momentum—nice work!'
+        message: 'Here\'s a quick coaching tip while the AI is warming up: keep it consistent today. Add a 10-15 minute walk, hydrate, and wind down with light stretching. Small steps build big momentum - nice work!'
       });
     }
     res.status(502).json({ error: 'Failed to get coaching response', details: error.message });

@@ -7,8 +7,8 @@ on:
         description: "Prompt to send to GPT-5"
         required: true
         default: "Give me a short motivational health tip."
-  schedule:
-    - cron: "0 13 * * *" # Run daily at 13:00 UTC
+  # schedule:
+  #   - cron: "0 13 * * *" # Run daily at 13:00 UTC (disabled to conserve token quota)
 
 jobs:
   run-inference:
