@@ -319,7 +319,8 @@ app.post('/api/coach', async (req, res) => {
     const dataContext = createCoachingPrompt(fitbitData || (useDemo ? demoActivities() : null));
     const userContent = (hasUserPrompt ? directPrompt.trim() : 'Provide a brief, encouraging coaching tip using the data above.') + '\n\nImportant: Do not ask me to provide any additional data. Use the data above and include at least one numeric metric in your response.';
 
-    if (!prompt) {
+    // Require either a user prompt, fitbit data, or demo mode
+    if (!hasUserPrompt && !fitbitData && !useDemo) {
       return res.status(400).json({ error: 'No prompt or data provided' });
     }
 
@@ -421,7 +422,7 @@ app.post('/api/coach', async (req, res) => {
       saveResponse({ timestamp: new Date().toISOString(), prompt: promptForHistory, message: demoMsg, demo: true, dataSynopsis });
       return res.json({ message: demoMsg, dataSynopsis });
     }
-    saveResponse({ timestamp: new Date().toISOString(), prompt, message: 'Failed to get coaching response', error: true });
+    saveResponse({ timestamp: new Date().toISOString(), prompt: promptForHistory, message: 'Failed to get coaching response', error: true });
     res.status(502).json({ error: 'Failed to get coaching response', details: error.message });
   }
 });
