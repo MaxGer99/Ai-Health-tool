@@ -1,3 +1,16 @@
+# Node/JS common
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Env files and local secrets
+.env
+.env.*
+
+# OS/Editor
+.DS_Store
+.vscode/
 node_modules/
 .env
 .DS_Store

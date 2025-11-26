@@ -62,6 +62,8 @@ Sensitive values (API keys, client secrets) must NOT be committed to git. This r
    - `SESSION_SECRET`
    - `LLM_API_URL`
    - `LLM_API_KEY`
+   - `LLM_MODEL`
+   - `GITHUB_TOKEN` (or use `LLM_API_KEY`) for GitHub Models inference
 
 Best practices:
 - Keep `.env` files out of git (already configured)
@@ -174,6 +176,25 @@ Visit http://localhost:3001 in your browser.
 - **Fitbit OAuth error**: Check your callback URL matches exactly
 - **LLM not responding**: Ensure your local LLM server is running
 - **CORS issues**: Make sure CORS is enabled in server.js
+
+## GitHub Models Workflow
+
+This repo includes `/.github/workflows/models-inference.yml` to call GitHub Models (GPT-5):
+
+- Triggers: manual (`workflow_dispatch`) and daily at 13:00 UTC (`schedule`).
+- Auth: Uses `GH_MODELS_TOKEN` (if present) or falls back to `GITHUB_TOKEN`.
+- Output: Logs the model reply and uploads `response.json` as an artifact (`models-response`).
+
+### Setup
+
+- Create a fine‑grained PAT with “Models (inference)” permission.
+- Add it as a repository secret named `GH_MODELS_TOKEN`:
+  - Repo → Settings → Secrets and variables → Actions → New secret → `GH_MODELS_TOKEN`
+
+### Run
+
+- Manual: GitHub → Actions → “GitHub Models Inference Demo” → Run workflow → enter `prompt`.
+- Scheduled: Wait for daily run; view logs and download artifact.
 
 ## GitHub Pages Deployment
 
