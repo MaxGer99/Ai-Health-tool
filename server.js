@@ -47,7 +47,7 @@ const LLM_MODEL = process.env.LLM_MODEL || 'openai/gpt-4o-mini';
 
 // Rate limiting for LLM API calls
 let lastLLMCallTime = 0;
-const MIN_TIME_BETWEEN_CALLS = Number(process.env.MIN_TIME_BETWEEN_CALLS || 5000); // default 5s between requests
+const MIN_TIME_BETWEEN_CALLS = Number(process.env.MIN_TIME_BETWEEN_CALLS || 15000); // default 15s between requests (increased for quota conservation)
 
 // Simple FIFO queue to serialize LLM requests
 const llmQueue = [];
@@ -292,7 +292,7 @@ app.post('/api/coach', async (req, res) => {
     // Call the LLM API with retry logic for rate limits and throttling
     let llmResponse;
     const queuePosition = llmQueue.length; // snapshot before enqueue
-    let retries = 1; // minimize upstream retries to avoid repeated 429s
+    let retries = 0; // No retries - return fallback immediately on rate limit to conserve quota
     
     while (retries >= 0) {
       try {
