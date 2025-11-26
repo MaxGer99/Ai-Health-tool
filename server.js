@@ -425,7 +425,7 @@ app.get('/api/github/check', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Fitbit OAuth redirect: ${FITBIT_REDIRECT_URI}`);
-  console.log(`🤖 LLM API URL: ${LLM_API_URL}`);
+  console.log(`LLM API URL: ${LLM_API_URL}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   const llmConfigured = Boolean(LLM_API_URL && LLM_MODEL && LLM_API_KEY);
   console.log(`🧠 LLM configured: ${llmConfigured ? 'yes' : 'no'} (model: ${LLM_MODEL})`);

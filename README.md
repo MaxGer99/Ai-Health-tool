@@ -84,8 +84,8 @@ Best practices:
 
 ## Features
 
-- 🏃‍♂️ Fetch real-time data from Fitbit (steps, heart rate, sleep, calories, activities)
-- 🤖 AI-powered health coaching using a local LLM
+- Fetch real-time data from Fitbit (steps, heart rate, sleep, calories, activities)
+- AI-powered health coaching using an LLM
 - 💬 Personalized encouragement based on your goals and progress
 - 📊 Visual display of your health metrics
 - 🔒 Secure OAuth2 authentication with Fitbit
