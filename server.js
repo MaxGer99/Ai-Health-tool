@@ -219,19 +219,21 @@ app.get('/api/fitbit/activities', async (req, res) => {
 // Get AI coaching based on Fitbit data
 app.post('/api/coach', async (req, res) => {
   try {
-    const { fitbitData, prompt: directPrompt } = req.body;
+    const { fitbitData, prompt: directPrompt, demo } = req.body;
 
-    // Support direct prompt (for GitHub Pages) or generate from Fitbit data
+    // If demo=true, always use demo data for prompt
+    const useDemo = demo === true || demo === 'true' || process.env.DEMO_MODE === 'true';
+
     const prompt = directPrompt && String(directPrompt).trim().length > 0
       ? directPrompt.trim()
       : createCoachingPrompt(
-          fitbitData || (process.env.DEMO_MODE === 'true' ? demoActivities() : null)
+          fitbitData || (useDemo ? demoActivities() : null)
         );
 
     if (!prompt) {
       return res.status(400).json({ error: 'No prompt or data provided' });
     }
-    
+
     // Call the LLM API
     const llmResponse = await axios.post(
       `${LLM_API_URL}/chat/completions`,
@@ -259,10 +261,10 @@ app.post('/api/coach', async (req, res) => {
         }
       }
     );
-    
+
     const coachingMessage = llmResponse.data.choices?.[0]?.message?.content || 'No message generated.';
     res.json({ message: coachingMessage });
-    
+
   } catch (error) {
     console.error('LLM API error:', error.response?.data || error.message);
     res.status(500).json({ 
