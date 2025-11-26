@@ -23,6 +23,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const connectBtn = document.getElementById('connect-btn');
+            const uploadBtn = document.getElementById('upload-fitbit');
+            const fitbitFileInput = document.getElementById('fitbit-file');
+            const fitbitPreview = document.getElementById('fitbit-preview');
+            const fitbitSummary = document.getElementById('fitbit-summary');
+            let uploadedFitbitData = null;
             const submitBtn = document.getElementById('submit-prompt');
             const promptInput = document.getElementById('prompt-input');
             const errorSection = document.getElementById('error-section');
@@ -82,6 +87,51 @@
             connectBtn.addEventListener('click', () => {
                 window.location.href = 'https://ai-health-tool-1.onrender.com/';
             });
+
+            uploadBtn.addEventListener('click', () => {
+                fitbitFileInput.click();
+            });
+
+            fitbitFileInput.addEventListener('change', async (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (!file) return;
+                try {
+                    const text = await file.text();
+                    const json = JSON.parse(text);
+                    uploadedFitbitData = json;
+                    const summary = buildFitbitSummary(json);
+                    fitbitSummary.textContent = summary;
+                    fitbitPreview.style.display = 'block';
+                } catch (err) {
+                    showError('Invalid JSON file');
+                    uploadedFitbitData = null;
+                    fitbitPreview.style.display = 'none';
+                }
+            });
+
+            function buildFitbitSummary(data) {
+                if (!data) return 'No data loaded.';
+                let out = '';
+                try {
+                    const activities = data.activities?.summary || data.summary || {};
+                    if (activities.steps) out += `Steps: ${activities.steps}\n`;
+                    if (activities.caloriesOut) out += `Calories: ${activities.caloriesOut}\n`;
+                    const fairly = activities.fairlyActiveMinutes || 0;
+                    const very = activities.veryActiveMinutes || 0;
+                    const activeTotal = fairly + very;
+                    if (activeTotal) out += `Active Minutes: ${activeTotal} (Fairly: ${fairly}, Very: ${very})\n`;
+                    if (activities.distance) out += `Distance: ${activities.distance} km\n`;
+                    const heart = data.heart || data.heartRate || {};
+                    if (heart.restingHeartRate) out += `Resting HR: ${heart.restingHeartRate}\n`;
+                    const sleep = data.sleep || {};
+                    if (sleep.totalMinutesAsleep || sleep.totalTimeInBed) {
+                        out += `Sleep: ${sleep.totalMinutesAsleep || 0} min asleep / ${sleep.totalTimeInBed || 0} in bed\n`;
+                    }
+                    return out.trim() || 'Data parsed but no key metrics found.';
+                } catch (e) {
+                    return 'Failed to parse summary.';
+                }
+            }
 
             async function loadHistory() {
                 try {
@@ -164,7 +214,7 @@
                     const res = await fetch('https://ai-health-tool-1.onrender.com/api/coach', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt, demo: false })
+                        body: JSON.stringify({ prompt, demo: false, fitbitData: uploadedFitbitData })
                     });
                     if (!res.ok) {
                         const errorText = await res.text().catch(() => 'Unknown error');
@@ -217,8 +267,16 @@
 
             <div class="card" id="auth-section">
                 <h2>Connect Your Fitbit</h2>
-                <p>Authorize via our hosted app to sync your data.</p>
-                <button id="connect-btn" class="btn btn-primary">Connect with Fitbit</button>
+                <p>Authorize via our hosted app or upload exported JSON for targeted coaching.</p>
+                <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                    <button id="connect-btn" class="btn btn-primary">Connect with Fitbit</button>
+                    <button id="upload-fitbit" class="btn btn-secondary">Upload Fitbit Data (JSON)</button>
+                    <input type="file" id="fitbit-file" accept="application/json" style="display:none;" />
+                </div>
+                <div id="fitbit-preview" style="display:none; margin-top:14px; background:#f4f6f9; border:1px solid #e0e0e0; padding:12px; border-radius:8px;">
+                   <strong style="display:block; margin-bottom:6px;">Uploaded Data Summary:</strong>
+                   <div id="fitbit-summary" style="font-size:0.85rem; white-space:pre-wrap;"></div>
+                </div>
             </div>
 
             <div class="card" id="llm-section">

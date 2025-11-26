@@ -311,11 +311,19 @@ app.post('/api/coach', async (req, res) => {
   const useDemo = demo === true || demo === 'true' || process.env.DEMO_MODE === 'true';
 
   try {
-    const prompt = directPrompt && String(directPrompt).trim().length > 0
-      ? directPrompt.trim()
-      : createCoachingPrompt(
-          fitbitData || (useDemo ? demoActivities() : null)
-        );
+    let prompt;
+    const hasUserPrompt = directPrompt && String(directPrompt).trim().length > 0;
+    if (hasUserPrompt && fitbitData) {
+      // Combine structured data summary with user request for better targeting
+      const dataSummary = createCoachingPrompt(fitbitData);
+      prompt = `${dataSummary}\n\nUser request: ${directPrompt.trim()}`;
+    } else if (hasUserPrompt) {
+      prompt = directPrompt.trim();
+    } else {
+      prompt = createCoachingPrompt(
+        fitbitData || (useDemo ? demoActivities() : null)
+      );
+    }
 
     if (!prompt) {
       return res.status(400).json({ error: 'No prompt or data provided' });
