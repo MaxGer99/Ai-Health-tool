@@ -1,387 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitbit Health Coach - AI-Powered Health Coaching</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Health Coach</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-            line-height: 1.6;
-            color: #333;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            min-height: 100vh; padding: 24px; color: #1a1a2e;
         }
-        
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-        
-        h1 {
-            color: #667eea;
-            margin-bottom: 20px;
-            font-size: 2.5rem;
-        }
-        
-        h2 {
-            color: #764ba2;
-            margin-top: 30px;
-            margin-bottom: 15px;
-            font-size: 1.8rem;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
-        }
-        
-        h3 {
-            color: #555;
-            margin-top: 20px;
-            margin-bottom: 10px;
-        }
-        
-        p {
-            margin-bottom: 15px;
-        }
-        
-        .hero {
-            text-align: center;
-            padding: 40px 0;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 30px;
-        }
-        
-        .hero p {
-            font-size: 1.2rem;
-            color: #666;
-        }
-        
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin: 30px 0;
-        }
-        
-        .feature-card {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
-        }
-        
-        .feature-card h3 {
-            color: #667eea;
-            margin-top: 0;
-        }
-        
-        code {
-            background: #f4f4f4;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 0.9em;
-        }
-        
-        pre {
-            background: #2d2d2d;
-            color: #f8f8f2;
-            padding: 20px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 20px 0;
-        }
-        
-        pre code {
-            background: none;
-            padding: 0;
-            color: #f8f8f2;
-        }
-        
-        .button {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            margin: 10px 10px 10px 0;
-            transition: transform 0.2s;
-        }
-        
-        .button:hover {
-            transform: translateY(-2px);
-        }
-        
-        .alert {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-        
-        .success {
-            background: #d4edda;
-            border-left: 4px solid #28a745;
-        }
-        
-        .info {
-            background: #d1ecf1;
-            border-left: 4px solid #0c5460;
-        }
-        
-        ul, ol {
-            margin-left: 30px;
-            margin-bottom: 15px;
-        }
-        
-        li {
-            margin-bottom: 8px;
-        }
-        
-        .steps {
-            counter-reset: step-counter;
-            list-style: none;
-            margin-left: 0;
-        }
-        
-        .steps li {
-            counter-increment: step-counter;
-            padding-left: 50px;
-            position: relative;
-            margin-bottom: 25px;
-        }
-        
-        .steps li::before {
-            content: counter(step-counter);
-            position: absolute;
-            left: 0;
-            top: 0;
-            background: #667eea;
-            color: white;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-        
-        a {
-            color: #667eea;
-        }
-        
-        a:hover {
-            color: #764ba2;
-        }
+        .container { max-width: 900px; margin: 0 auto; }
+        header { text-align: center; color: white; margin-bottom: 30px; padding: 20px; }
+        header h1 { font-size: 2.4rem; margin-bottom: 10px; }
+        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn { padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .btn-primary { background: linear-gradient(135deg, #00b0b9, #4cc9f0); color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e0e0e0; font-size: 1rem; resize: vertical; }
+        .message-header { color: #2a9d8f; margin-bottom: 10px; font-size: 0.95rem; }
+        .coaching-message { margin-top: 16px; padding: 16px; background: #fff; border-radius: 8px; border-left: 4px solid #2a9d8f; }
+        .error-card { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 16px; border-radius: 8px; margin-top: 16px; }
+        footer { text-align: center; color: white; margin-top: 24px; opacity: 0.85; }
     </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const connectBtn = document.getElementById('connect-btn');
+            const submitBtn = document.getElementById('submit-prompt');
+            const promptInput = document.getElementById('prompt-input');
+            const errorSection = document.getElementById('error-section');
+            const errorMessage = document.getElementById('error-message');
+            const coachingResponse = document.getElementById('coaching-response');
+            const coachingText = document.getElementById('coaching-text');
+
+            connectBtn.addEventListener('click', () => {
+                window.location.href = 'https://ai-health-tool-1.onrender.com/';
+            });
+
+            submitBtn.addEventListener('click', async () => {
+                const prompt = (promptInput.value || '').trim();
+                if (!prompt) {
+                    showError('Please enter a prompt first.');
+                    return;
+                }
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Sending...';
+                coachingResponse.style.display = 'none';
+                try {
+                    const res = await fetch('https://ai-health-tool-1.onrender.com/api/coach', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt })
+                    });
+                    if (!res.ok) throw new Error('LLM request failed');
+                    const data = await res.json();
+                    coachingText.textContent = data.message || 'No response from coach.';
+                    coachingResponse.style.display = 'block';
+                } catch (err) {
+                    showError('Failed to get response from the coach.');
+                    console.error(err);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Send Prompt';
+                }
+            });
+
+            function showError(msg) {
+                errorSection.style.display = 'block';
+                errorMessage.textContent = msg;
+                setTimeout(() => { errorSection.style.display = 'none'; }, 4000);
+            }
+        });
+    </script>
 </head>
 <body>
     <div class="container">
-        <div class="hero">
-            <h1>🏃‍♂️ Fitbit Health Coach</h1>
-            <p>AI-Powered Personal Health Coaching with Fitbit Integration</p>
-            <a href="https://github.com/MaxGer99/Ai-Health-tool" class="button">View on GitHub</a>
-            <a href="#setup" class="button">Get Started</a>
+        <header>
+            <h1>🏃‍♂️ AI Health Coach</h1>
+            <p>Welcome! Connect Fitbit and chat with the coach.</p>
+        </header>
+
+        <div class="card" id="auth-section">
+            <h2>Connect Your Fitbit</h2>
+            <p>Authorize via our hosted app to sync your data.</p>
+            <button id="connect-btn" class="btn btn-primary">Connect with Fitbit</button>
         </div>
 
-        <div class="alert info">
-            <strong>ℹ️ Important:</strong> This application requires a local server to run. It cannot function as a static GitHub Pages site because it needs a backend server for Fitbit OAuth authentication and LLM integration. Follow the setup instructions below to run it locally.
-        </div>
-
-        <h2>✨ Features</h2>
-        <div class="feature-grid">
-            <div class="feature-card">
-                <h3>📊 Real-Time Data</h3>
-                <p>Fetch your latest steps, heart rate, sleep, and activity data from Fitbit</p>
+        <div class="card" id="llm-section">
+            <h2>🤖 Ask the Coach</h2>
+            <p>Type a prompt for the coach. Example: "Create a weekly workout plan"</p>
+            <textarea id="prompt-input" rows="4" placeholder="Enter your prompt..."></textarea>
+            <div style="margin-top:12px;">
+                <button id="submit-prompt" class="btn btn-secondary">Send Prompt</button>
             </div>
-            <div class="feature-card">
-                <h3>🤖 AI Coaching</h3>
-                <p>Get personalized encouragement from a local LLM based on your progress</p>
+            <div id="coaching-response" style="display:none; margin-top:16px;">
+                <div class="coaching-message">
+                    <div class="message-header"><strong>Your Coach Says:</strong></div>
+                    <p id="coaching-text"></p>
+                </div>
             </div>
-            <div class="feature-card">
-                <h3>🔒 Secure OAuth</h3>
-                <p>Safe and secure authentication with Fitbit using OAuth 2.0</p>
-            </div>
-            <div class="feature-card">
-                <h3>📱 Responsive UI</h3>
-                <p>Beautiful, modern interface that works on all devices</p>
+            <div id="error-section" class="error-card" style="display:none;">
+                <h3>⚠️ Error</h3>
+                <p id="error-message"></p>
             </div>
         </div>
 
-        <h2 id="setup">🚀 Setup Instructions</h2>
-        
-        <h3>Prerequisites</h3>
-        <ul>
-            <li>Node.js v16 or higher</li>
-            <li>A Fitbit account</li>
-            <li>A local LLM server (LM Studio, Ollama, etc.)</li>
-        </ul>
-
-        <h3>Step-by-Step Setup</h3>
-        <ol class="steps">
-            <li>
-                <strong>Clone the Repository</strong>
-                <pre><code>git clone https://github.com/MaxGer99/Ai-Health-tool.git
-cd Ai-Health-tool</code></pre>
-            </li>
-            
-            <li>
-                <strong>Install Dependencies</strong>
-                <pre><code>npm install</code></pre>
-            </li>
-            
-            <li>
-                <strong>Register Fitbit Application</strong>
-                <p>Go to <a href="https://dev.fitbit.com/apps" target="_blank">Fitbit Developer Portal</a> and register a new app with:</p>
-                <ul>
-                    <li><strong>Application Name:</strong> Your app name</li>
-                    <li><strong>Application Website:</strong> http://localhost:3001</li>
-                    <li><strong>Callback URL:</strong> <code>http://localhost:3001/auth/fitbit/callback</code></li>
-                    <li><strong>OAuth 2.0 Type:</strong> Personal</li>
-                    <li><strong>Access Type:</strong> Read Only</li>
-                </ul>
-                <p>Copy your <strong>Client ID</strong> and <strong>Client Secret</strong></p>
-            </li>
-            
-            <li>
-                <strong>Setup Local LLM</strong>
-                <p>Install and run one of these:</p>
-                <ul>
-                    <li><strong>LM Studio:</strong> Download from <a href="https://lmstudio.ai/" target="_blank">lmstudio.ai</a>, load a model (Llama 3.1 recommended), and start the server</li>
-                    <li><strong>Ollama:</strong> Install from <a href="https://ollama.ai/" target="_blank">ollama.ai</a> and run: <code>ollama run llama3.1</code></li>
-                </ul>
-                <p>Default LLM server URL: <code>http://localhost:1234/v1</code></p>
-            </li>
-            
-            <li>
-                <strong>Configure Environment Variables</strong>
-                <pre><code>cp .env.example .env</code></pre>
-                <p>Edit <code>.env</code> with your credentials:</p>
-                <pre><code>FITBIT_CLIENT_ID=your_fitbit_client_id
-FITBIT_CLIENT_SECRET=your_fitbit_client_secret
-FITBIT_REDIRECT_URI=http://localhost:3001/auth/fitbit/callback
-
-LLM_API_KEY=your_llm_api_key_here
-LLM_API_URL=http://localhost:1234/v1
-LLM_MODEL=local-model
-
-PORT=3001
-SESSION_SECRET=your_random_session_secret</code></pre>
-            </li>
-            
-            <li>
-                <strong>Run the Application</strong>
-                <pre><code>npm start</code></pre>
-                <p>Visit <code>http://localhost:3001</code> in your browser</p>
-            </li>
-        </ol>
-
-        <div class="alert success">
-            <strong>🎉 Success!</strong> You should now see the app running. Click "Connect with Fitbit" to authorize and start receiving AI coaching!
-        </div>
-
-        <h2>📖 How to Use</h2>
-        <ol>
-            <li>Click <strong>"Connect with Fitbit"</strong> to authorize the application</li>
-            <li>Log in to your Fitbit account and grant permissions</li>
-            <li>Your health data will be displayed on the dashboard</li>
-            <li>Click <strong>"Get Coaching"</strong> to receive personalized AI feedback</li>
-            <li>The AI will analyze your progress and provide motivational encouragement</li>
-        </ol>
-
-        <h2>🔧 API Endpoints</h2>
-        <ul>
-            <li><code>GET /</code> - Main application page</li>
-            <li><code>GET /auth/fitbit</code> - Initiate Fitbit OAuth flow</li>
-            <li><code>GET /auth/fitbit/callback</code> - OAuth callback handler</li>
-            <li><code>GET /api/auth/status</code> - Check authentication status</li>
-            <li><code>GET /api/fitbit/profile</code> - Get user profile</li>
-            <li><code>GET /api/fitbit/activities</code> - Get today's activities</li>
-            <li><code>POST /api/coach</code> - Get AI coaching response</li>
-            <li><code>POST /api/auth/logout</code> - Log out user</li>
-        </ul>
-
-        <h2>🛠️ Technology Stack</h2>
-        <ul>
-            <li><strong>Backend:</strong> Node.js, Express</li>
-            <li><strong>Frontend:</strong> HTML, CSS, Vanilla JavaScript</li>
-            <li><strong>APIs:</strong> Fitbit API, OpenAI-compatible LLM API</li>
-            <li><strong>Authentication:</strong> OAuth 2.0</li>
-        </ul>
-
-        <h2>📁 Project Structure</h2>
-        <pre><code>.
-├── server.js           # Express server and API routes
-├── public/
-│   ├── index.html     # Frontend UI
-│   ├── styles.css     # Styling
-│   └── app.js         # Frontend JavaScript
-├── .env               # Environment variables (not in git)
-├── .env.example       # Environment template
-├── package.json       # Dependencies
-└── README.md          # Documentation</code></pre>
-
-        <h2>🐛 Troubleshooting</h2>
-        
-        <h3>Fitbit OAuth Error</h3>
-        <p>Make sure your callback URL in the Fitbit app settings matches exactly: <code>http://localhost:3001/auth/fitbit/callback</code></p>
-        
-        <h3>LLM Not Responding</h3>
-        <ul>
-            <li>Ensure your local LLM server is running</li>
-            <li>Check the <code>LLM_API_URL</code> in your <code>.env</code> file</li>
-            <li>Verify the model is loaded in LM Studio/Ollama</li>
-            <li>Test the endpoint: <code>curl http://localhost:1234/v1/models</code></li>
-        </ul>
-        
-        <h3>No Data Displayed</h3>
-        <ul>
-            <li>Make sure you've granted all requested permissions to the Fitbit app</li>
-            <li>Check that you have recent activity data in your Fitbit account</li>
-            <li>Look at the browser console (F12) for error messages</li>
-            <li>Check the terminal where the server is running for backend errors</li>
-        </ul>
-
-        <h3>Port Already in Use</h3>
-        <p>If port 3001 is already in use, change the <code>PORT</code> in your <code>.env</code> file and update the Fitbit callback URL accordingly.</p>
-
-        <div class="alert">
-            <strong>⚠️ Note:</strong> This application requires a backend server and cannot run as a static site. You must run it locally or deploy to a server that supports Node.js applications (Heroku, Railway, Render, etc.).
-        </div>
-
-        <h2>🚀 Deployment Options</h2>
-        <p>For production deployment, consider these platforms that support Node.js:</p>
-        <ul>
-            <li><strong>Railway:</strong> Easy deployment with automatic HTTPS</li>
-            <li><strong>Render:</strong> Free tier available with automatic deployments</li>
-            <li><strong>Heroku:</strong> Classic platform with add-ons</li>
-            <li><strong>DigitalOcean App Platform:</strong> Full-featured with scalability</li>
-        </ul>
-        <p>Remember to update your Fitbit app's callback URL to match your deployed URL!</p>
-
-        <h2>📝 License</h2>
-        <p>This project is licensed under the MIT License.</p>
-
-        <hr style="margin: 40px 0; border: none; border-top: 1px solid #eee;">
-        
-        <p style="text-align: center; color: #666;">
-            Built with ❤️ for health and wellness | 
-            <a href="https://github.com/MaxGer99/Ai-Health-tool">View on GitHub</a>
-        </p>
+        <footer>
+            <p>Built with ❤️ for health and wellness</p>
+        </footer>
     </div>
 </body>
 </html>

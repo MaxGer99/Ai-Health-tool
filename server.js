@@ -9,7 +9,22 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+// Enable CORS for GitHub Pages and general usage
+const allowedOrigins = [
+  'https://maxger99.github.io',
+  process.env.ALLOWED_ORIGIN
+].filter(Boolean);
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true); // allow same-origin/non-browser
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET','POST','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization']
+}));
 app.use(express.json());
 app.use(express.static('public'));
 app.use(session({
@@ -203,15 +218,19 @@ app.get('/api/fitbit/activities', async (req, res) => {
 
 // Get AI coaching based on Fitbit data
 app.post('/api/coach', async (req, res) => {
-  if (!req.session.accessToken) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-  
   try {
-    const { fitbitData } = req.body;
-    
-    // Prepare the prompt for the LLM
-    const prompt = createCoachingPrompt(fitbitData);
+    const { fitbitData, prompt: directPrompt } = req.body;
+
+    // Support direct prompt (for GitHub Pages) or generate from Fitbit data
+    const prompt = directPrompt && String(directPrompt).trim().length > 0
+      ? directPrompt.trim()
+      : createCoachingPrompt(
+          fitbitData || (process.env.DEMO_MODE === 'true' ? demoActivities() : null)
+        );
+
+    if (!prompt) {
+      return res.status(400).json({ error: 'No prompt or data provided' });
+    }
     
     // Call the LLM API
     const llmResponse = await axios.post(
@@ -241,7 +260,7 @@ app.post('/api/coach', async (req, res) => {
       }
     );
     
-    const coachingMessage = llmResponse.data.choices[0].message.content;
+    const coachingMessage = llmResponse.data.choices?.[0]?.message?.content || 'No message generated.';
     res.json({ message: coachingMessage });
     
   } catch (error) {
