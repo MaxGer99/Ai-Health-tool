@@ -36,15 +36,20 @@ function setupEventListeners() {
             });
 
             if (!res.ok) {
-                throw new Error('LLM request failed');
+                const errorText = await res.text().catch(() => 'Unknown error');
+                console.error('API Error:', res.status, errorText);
+                throw new Error(`Server responded with ${res.status}`);
             }
 
             const data = await res.json();
+            if (data.error) {
+                throw new Error(data.error);
+            }
             coachingText.textContent = data.message || 'No response from coach.';
             coachingResponse.style.display = 'block';
         } catch (err) {
-            console.error(err);
-            showError('Failed to get response from the coach.');
+            console.error('Coaching error:', err);
+            showError(`Failed to get response: ${err.message}`);
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Send Prompt';

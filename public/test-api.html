@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test Page</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #eee; }
+        .container { max-width: 800px; margin: 0 auto; }
+        button { padding: 12px 24px; margin: 10px 5px; background: #4cc9f0; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 14px; }
+        button:hover { background: #3ba9d0; }
+        .result { background: #2a2a3e; padding: 16px; border-radius: 8px; margin: 16px 0; white-space: pre-wrap; word-break: break-word; }
+        .success { border-left: 4px solid #4cc9f0; }
+        .error { border-left: 4px solid #ff6b6b; }
+        h1 { color: #4cc9f0; }
+        h2 { color: #a0a0ff; margin-top: 24px; }
+        .endpoint { color: #ffd93d; }
+        .status { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 12px; margin-left: 10px; }
+        .status.ok { background: #4cc9f0; color: white; }
+        .status.fail { background: #ff6b6b; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 AI Health Tool - API Test Page</h1>
+        <p>Test your API endpoints to diagnose connection issues.</p>
+
+        <h2>1. Test Local Server (localhost:3001)</h2>
+        <button onclick="testLocal()">Test Local Health</button>
+        <button onclick="testLocalCoach()">Test Local Coach</button>
+        <div id="local-result"></div>
+
+        <h2>2. Test Render Deployment</h2>
+        <button onclick="testRender()">Test Render Health</button>
+        <button onclick="testRenderCoach()">Test Render Coach</button>
+        <div id="render-result"></div>
+
+        <h2>3. Test Direct GitHub Models API</h2>
+        <button onclick="testGitHubModels()">Test GitHub Models</button>
+        <div id="github-result"></div>
+    </div>
+
+    <script>
+        async function testLocal() {
+            await runTest('local-result', 'Local Health', async () => {
+                const res = await fetch('http://localhost:3001/health');
+                return { status: res.status, data: await res.json() };
+            });
+        }
+
+        async function testLocalCoach() {
+            await runTest('local-result', 'Local Coach', async () => {
+                const res = await fetch('http://localhost:3001/api/coach', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: 'Test prompt', demo: true })
+                });
+                return { status: res.status, data: await res.json() };
+            });
+        }
+
+        async function testRender() {
+            await runTest('render-result', 'Render Health', async () => {
+                const res = await fetch('https://ai-health-tool-1.onrender.com/health');
+                return { status: res.status, data: await res.json() };
+            });
+        }
+
+        async function testRenderCoach() {
+            await runTest('render-result', 'Render Coach', async () => {
+                const res = await fetch('https://ai-health-tool-1.onrender.com/api/coach', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: 'Give me a health tip', demo: true })
+                });
+                return { status: res.status, data: await res.json() };
+            });
+        }
+
+        async function testGitHubModels() {
+            const token = prompt('Enter your GitHub PAT (or press Cancel to skip):');
+            if (!token) {
+                document.getElementById('github-result').innerHTML = 
+                    '<div class="result error">Test cancelled - no token provided</div>';
+                return;
+            }
+
+            await runTest('github-result', 'GitHub Models API', async () => {
+                const res = await fetch('https://models.github.ai/inference/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'User-Agent': 'ai-health-tool-test'
+                    },
+                    body: JSON.stringify({
+                        model: 'openai/gpt-4o-mini',
+                        messages: [{ role: 'user', content: 'Say "test successful"' }],
+                        max_tokens: 20
+                    })
+                });
+                return { status: res.status, data: await res.json() };
+            });
+        }
+
+        async function runTest(resultId, testName, testFn) {
+            const resultDiv = document.getElementById(resultId);
+            resultDiv.innerHTML = `<div class="result">⏳ Running ${testName}...</div>`;
+            
+            try {
+                const startTime = Date.now();
+                const result = await testFn();
+                const duration = Date.now() - startTime;
+                
+                const statusClass = result.status >= 200 && result.status < 300 ? 'ok' : 'fail';
+                const resultClass = result.status >= 200 && result.status < 300 ? 'success' : 'error';
+                
+                resultDiv.innerHTML = `
+                    <div class="result ${resultClass}">
+                        <strong>${testName}</strong>
+                        <span class="status ${statusClass}">HTTP ${result.status}</span>
+                        <span style="color: #888; font-size: 12px; float: right;">${duration}ms</span>
+                        <hr style="border: none; border-top: 1px solid #444; margin: 12px 0;">
+                        ${JSON.stringify(result.data, null, 2)}
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>${testName}</strong>
+                        <span class="status fail">ERROR</span>
+                        <hr style="border: none; border-top: 1px solid #444; margin: 12px 0;">
+                        ${error.message}
+                        <br><br>
+                        <em>Possible causes:</em>
+                        <ul style="margin-top: 8px;">
+                            <li>Server not running</li>
+                            <li>CORS blocked</li>
+                            <li>Network error</li>
+                            <li>Invalid configuration</li>
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -49,13 +49,20 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ prompt, demo: true })
                     });
-                    if (!res.ok) throw new Error('LLM request failed');
+                    if (!res.ok) {
+                        const errorText = await res.text().catch(() => 'Unknown error');
+                        console.error('API Error:', res.status, errorText);
+                        throw new Error(`Server error: ${res.status}`);
+                    }
                     const data = await res.json();
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
                     coachingText.textContent = data.message || 'No response from coach.';
                     coachingResponse.style.display = 'block';
                 } catch (err) {
-                    showError('Failed to get response from the coach.');
-                    console.error(err);
+                    console.error('Coaching error:', err);
+                    showError(`Failed to get response: ${err.message || 'Network error'}`);
                 } finally {
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Send Prompt';
