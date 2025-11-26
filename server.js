@@ -314,7 +314,7 @@ app.post('/api/coach', async (req, res) => {
     // Build chat messages: inject data context into the system prompt for maximum adherence
     const hasUserPrompt = directPrompt && String(directPrompt).trim().length > 0;
     let promptForHistory = hasUserPrompt ? directPrompt.trim() : (fitbitData ? '(data-only)' : '(no user prompt)');
-    const baseSystem = 'You are an enthusiastic and supportive health coach. You MUST use any provided health data directly. NEVER ask the user to provide data that is already given. Do NOT request clarifications about steps, activity, sleep, or heart rate when those values are present. If some categories are missing (e.g., nutrition), proceed with the available data without asking for more. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences). Start with a one-line summary that cites at least one concrete metric (e.g., average steps, active minutes, sleep hours, or resting HR) from the provided data before giving recommendations. Do NOT include questions in your response.';
+    const baseSystem = 'You are an enthusiastic and supportive health coach. You MUST use any provided health data directly. NEVER ask the user to provide data that is already given. Do NOT request clarifications about steps, activity, sleep, or heart rate when those values are present. If some categories are missing (e.g., nutrition), proceed with the available data without asking for more. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences). Respond in this exact format without any questions or requests: \n\nSummary: <one sentence that cites at least one numeric metric from the data (e.g., average steps, active minutes, sleep hours, resting HR)>.\nPlan: <3–5 short bullet lines or sentences with concrete actions tailored to the data>.\nRecovery: <one sentence on rest/recovery based on the data>.\nMotivation: <one short encouraging sentence>.\n\nDo NOT include questions in your response.';
     const systemContent = baseSystem;
     const dataContext = createCoachingPrompt(fitbitData || (useDemo ? demoActivities() : null));
     const userContent = (hasUserPrompt ? directPrompt.trim() : 'Provide a brief, encouraging coaching tip using the data above.') + '\n\nImportant: Do not ask me to provide any additional data. Use the data above and include at least one numeric metric in your response.';
@@ -332,19 +332,27 @@ app.post('/api/coach', async (req, res) => {
       try {
         llmResponse = await enqueueLLMTask(async () => {
           return await throttledLLMCall(async () => {
+            // Prepare messages array for possible debug logging
+            const messages = [
+              { role: 'system', content: systemContent },
+              { role: 'user', content: 'Data: Week 2025-11-01 → 2025-11-07 • Avg steps 8,200/day • Avg active 45/day • Avg sleep 7.2h • Today 6,300 steps • Avg RHR 66.\nPrompt: Create a weekly plan focused on walking and recovery.' },
+              { role: 'assistant', content: 'Summary: With ~8,200 steps/day and 45 active minutes, you\'re on a solid base.\nPlan: Aim for 9,000–10,000 steps on 5 days; add two 20–25 min brisk walks; include 1 light mobility day; target 7+ hours of sleep to support recovery.\nRecovery: Keep RHR steady by spreading effort across the week; finish days with 5–8 min easy stretching.\nMotivation: Great consistency—small daily wins will build into bigger gains.' },
+              { role: 'user', content: 'Data: Week 2025-11-10 → 2025-11-16 • Avg steps 6,900/day • Avg active 30/day • Avg sleep 6.4h • Today 5,200 steps • Avg RHR 64.\nPrompt: Suggest a plan (nutrition not available).' },
+              { role: 'assistant', content: 'Summary: Averaging ~6,900 steps/day with 30 active minutes and ~6.4h sleep.\nPlan: Add a 15–20 min brisk walk on 4 days; 1 short bodyweight circuit (10–12 min); aim to add 15–30 min total walking across the week to reach ~7,500–8,000/day.\nRecovery: Prioritize a wind-down routine to nudge sleep toward 7+ hours.\nMotivation: You\'re trending up—keep it simple and steady.' },
+              { role: 'user', content: dataContext },
+              { role: 'user', content: userContent }
+            ];
+
+            if (process.env.LLM_DEBUG_LOGGING === 'true') {
+              const preview = messages.map((m, i) => ({ role: m.role, content: (m.content || '').slice(0, 400) + ((m.content || '').length > 400 ? '…' : '') }));
+              console.log('LLM messages preview:', JSON.stringify(preview, null, 2));
+            }
+
             return await axios.post(
               `${LLM_API_URL}/chat/completions`,
               {
                 model: LLM_MODEL,
-                messages: [
-                  { role: 'system', content: systemContent },
-                  // Few-shot example to demonstrate correct behavior
-                  { role: 'user', content: 'Data: Week 2025-11-01 → 2025-11-07 • Avg steps 8,200/day • Avg active 45/day • Avg sleep 7.2h • Today 6,300 steps • Avg RHR 66.\nPrompt: Create a weekly plan focused on walking and recovery.' },
-                  { role: 'assistant', content: 'Summary: With ~8,200 steps/day and 45 active minutes, you\'re on a solid base. Plan: Aim for 9,000–10,000 steps on 5 days, add two 20–25 min brisk walks, one light mobility day, and keep sleep near 7+ hours. Keep RHR steady by spreading effort across the week and finish days with 5–8 min easy stretching. No extra data needed—nice consistency.' },
-                  // Actual data + request
-                  { role: 'user', content: dataContext },
-                  { role: 'user', content: userContent }
-                ],
+                messages,
                 temperature: 0.0,
                 max_completion_tokens: 300
               },
