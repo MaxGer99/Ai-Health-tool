@@ -4,6 +4,7 @@ const axios = require('axios');
 const session = require('express-session');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -50,6 +51,31 @@ const LLM_API_KEY = process.env.LLM_API_KEY || process.env.GITHUB_TOKEN;
 // Default to GitHub Models inference endpoint if not provided
 const LLM_API_URL = process.env.LLM_API_URL || 'https://models.github.ai/inference';
 const LLM_MODEL = process.env.LLM_MODEL || 'openai/gpt-4o-mini';
+
+// Response persistence (last 500 kept)
+const RESPONSES_FILE = path.join(__dirname, 'responses.json');
+let responseHistory = [];
+try {
+  if (fs.existsSync(RESPONSES_FILE)) {
+    responseHistory = JSON.parse(fs.readFileSync(RESPONSES_FILE, 'utf-8'));
+  }
+} catch (e) {
+    console.error('Failed to load responses.json:', e.message);
+}
+function saveResponse(record) {
+  responseHistory.push(record);
+  // Keep only last 500
+  const truncated = responseHistory.slice(-500);
+  try {
+    fs.writeFileSync(RESPONSES_FILE, JSON.stringify(truncated, null, 2));
+  } catch (e) {
+    console.error('Failed to write responses.json:', e.message);
+  }
+}
+function stripEmojis(text) {
+  if (!text) return text;
+  return text.replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE0F}]/gu, '').replace(/\s{2,}/g, ' ').trim();
+}
 
 // Rate limiting for LLM API calls
 let lastLLMCallTime = 0;
@@ -351,7 +377,9 @@ app.post('/api/coach', async (req, res) => {
       }
     }
 
-    const coachingMessage = llmResponse.data.choices?.[0]?.message?.content || 'No message generated.';
+    let coachingMessage = llmResponse.data.choices?.[0]?.message?.content || 'No message generated.';
+    coachingMessage = stripEmojis(coachingMessage);
+    saveResponse({ timestamp: new Date().toISOString(), prompt, message: coachingMessage });
     res.json({ message: coachingMessage, queuePosition });
 
   } catch (error) {
@@ -363,18 +391,20 @@ app.post('/api/coach', async (req, res) => {
     
     if (isRateLimit) {
       console.log('Rate limit exceeded, returning helpful fallback message');
-      return res.json({
-        message: 'Rate limit reached. Try again in a few minutes. Meanwhile, here\'s a tip: stay consistent with small daily actions - a 10-minute walk, proper hydration, and light stretching can build lasting momentum.',
-        rateLimited: true
-      });
+      let fallback = 'Rate limit reached. Try again in a few minutes. Meanwhile, here is a tip: stay consistent with small daily actions - a 10-minute walk, proper hydration, and light stretching can build lasting momentum.';
+      fallback = stripEmojis(fallback);
+      saveResponse({ timestamp: new Date().toISOString(), prompt, message: fallback, rateLimited: true });
+      return res.json({ message: fallback, rateLimited: true });
     }
     
     // If LLM fails, return a graceful demo-friendly message when demo was requested
     if (useDemo) {
-      return res.json({
-        message: 'Here\'s a quick coaching tip while the AI is warming up: keep it consistent today. Add a 10-15 minute walk, hydrate, and wind down with light stretching. Small steps build big momentum - nice work!'
-      });
+      let demoMsg = 'Here is a quick coaching tip while the AI is warming up: keep it consistent today. Add a 10-15 minute walk, hydrate, and wind down with light stretching. Small steps build big momentum - nice work!';
+      demoMsg = stripEmojis(demoMsg);
+      saveResponse({ timestamp: new Date().toISOString(), prompt, message: demoMsg, demo: true });
+      return res.json({ message: demoMsg });
     }
+    saveResponse({ timestamp: new Date().toISOString(), prompt, message: 'Failed to get coaching response', error: true });
     res.status(502).json({ error: 'Failed to get coaching response', details: error.message });
   }
 });
@@ -449,6 +479,11 @@ app.get('/health', (req, res) => {
     hasGithubToken: Boolean(process.env.GITHUB_TOKEN),
     llmConfigured: Boolean(LLM_API_URL && LLM_MODEL && LLM_API_KEY)
   });
+});
+
+// Recent responses (last 50)
+app.get('/api/responses', (req, res) => {
+  res.json({ count: responseHistory.length, items: responseHistory.slice(-50) });
 });
 
 // Verify GitHub token connectivity (does not expose the token)
