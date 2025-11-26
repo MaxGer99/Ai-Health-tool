@@ -143,6 +143,12 @@
                 const summary = buildFitbitSummary(json);
                 fitbitSummary.textContent = summary;
                 fitbitPreview.style.display = 'block';
+                const synopsis = buildUsageSynopsis(json);
+                const usage = document.getElementById('data-usage');
+                if (usage) {
+                    usage.textContent = synopsis;
+                    usage.style.display = synopsis ? 'block' : 'none';
+                }
                 closeModal();
                 if (successMsg) showError(successMsg);
             }
@@ -153,14 +159,13 @@
                 try {
                     const text = await file.text();
                     const json = JSON.parse(text);
-                    uploadedFitbitData = json;
-                    const summary = buildFitbitSummary(json);
-                    fitbitSummary.textContent = summary;
-                    fitbitPreview.style.display = 'block';
+                    handleDataSelection(json, 'File loaded.');
                 } catch (err) {
                     showError('Invalid JSON file');
                     uploadedFitbitData = null;
                     fitbitPreview.style.display = 'none';
+                    const usage = document.getElementById('data-usage');
+                    if (usage) usage.style.display = 'none';
                 }
             });
 
@@ -221,6 +226,40 @@
                 } catch (e) {
                     return 'Failed to parse summary.';
                 }
+            }
+
+            function buildUsageSynopsis(data) {
+                if (!data) return '';
+                try {
+                    if (Array.isArray(data.days) && data.days.length) {
+                        const days = data.days;
+                        let totalSteps = 0, totalActive = 0, totalSleepMin = 0;
+                        let rhrSum = 0, rhrCount = 0;
+                        days.forEach(d => {
+                            const s = d.activities?.summary || {};
+                            totalSteps += s.steps || 0;
+                            totalActive += (s.fairlyActiveMinutes || 0) + (s.veryActiveMinutes || 0);
+                            const sm = d.sleep?.summary?.totalMinutesAsleep;
+                            if (typeof sm === 'number') totalSleepMin += sm;
+                            const rhr = d.heart?.['activities-heart']?.[0]?.value?.restingHeartRate;
+                            if (typeof rhr === 'number') { rhrSum += rhr; rhrCount++; }
+                        });
+                        const avgSteps = Math.round(totalSteps / days.length).toLocaleString();
+                        const avgActive = Math.round(totalActive / days.length);
+                        const avgSleepHrs = (totalSleepMin / days.length / 60).toFixed(1);
+                        const avgRHR = rhrCount ? Math.round(rhrSum / rhrCount) : null;
+                        const latest = days[days.length - 1];
+                        const latestSteps = (latest.activities?.summary?.steps || 0).toLocaleString();
+                        return `Using 7-day dataset: ${days[0].date} → ${days[days.length - 1].date} • Avg steps ${avgSteps}/day • Avg active ${avgActive}/day • Avg sleep ${avgSleepHrs}h • Today ${latestSteps} steps${avgRHR ? ` • Avg RHR ${avgRHR}` : ''}`;
+                    }
+                    const steps = data.activities?.summary?.steps;
+                    const fairly = data.activities?.summary?.fairlyActiveMinutes || 0;
+                    const very = data.activities?.summary?.veryActiveMinutes || 0;
+                    const sleepMin = data.sleep?.summary?.totalMinutesAsleep || data.sleep?.totalMinutesAsleep;
+                    const sleepHrs = sleepMin ? (sleepMin / 60).toFixed(1) : null;
+                    const date = data.date || new Date().toISOString().slice(0,10);
+                    return `Using 1-day dataset: ${date} • Steps ${steps?.toLocaleString?.() || steps || 0} • Active ${fairly + very} •${sleepHrs ? ` Sleep ${sleepHrs}h` : ' Sleep n/a'}`;
+                } catch { return ''; }
             }
 
             // (Buttons removed in favor of modal)
@@ -473,6 +512,7 @@
                     <button id="check-config" class="btn" style="background: #6c757d; color: white; margin-left: 8px;">Check Config</button>
                     <span id="config-status" style="margin-left: 10px; font-size: 0.9em; color: #555;"></span>
                 </div>
+                <div id="data-usage" style="display:none; margin-top:10px; font-size:0.9em; color:#2a9d8f; background:#e8f6f3; border:1px solid #bde5dc; padding:8px 10px; border-radius:6px;"></div>
                 <div id="coaching-response" style="display:none; margin-top:16px;">
                     <div class="coaching-message">
                         <div class="message-header"><strong>Your Coach Says:</strong></div>
