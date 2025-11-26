@@ -35,8 +35,13 @@
             const coachingResponse = document.getElementById('coaching-response');
             const coachingText = document.getElementById('coaching-text');
             const checkConfigBtn = document.getElementById('check-config');
-            const sampleBtn = document.getElementById('sample-fitbit');
-            const generateBtn = document.getElementById('generate-dummy');
+            // Modal elements
+            const modal = document.getElementById('fitbit-modal');
+            const modalClose = document.getElementById('fitbit-modal-close');
+            const modalUpload = document.getElementById('fitbit-modal-upload');
+            const modalGenDay = document.getElementById('fitbit-modal-generate-day');
+            const modalGenWeek = document.getElementById('fitbit-modal-generate-week');
+            const modalLoadSample = document.getElementById('fitbit-modal-load-sample');
             const configWarning = document.getElementById('config-warning');
             const configMessage = document.getElementById('config-message');
 
@@ -91,8 +96,56 @@
             });
 
             uploadBtn.addEventListener('click', () => {
+                openModal();
+            });
+
+            function openModal() {
+                if (!modal) return;
+                modal.style.display = 'flex';
+            }
+            function closeModal() {
+                if (!modal) return;
+                modal.style.display = 'none';
+            }
+            if (modalClose) modalClose.addEventListener('click', closeModal);
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeModal();
+            });
+            if (modal) modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+
+            // Modal actions
+            if (modalUpload) modalUpload.addEventListener('click', () => {
                 fitbitFileInput.click();
             });
+            if (modalGenDay) modalGenDay.addEventListener('click', () => {
+                const data = generateDummyDayData();
+                handleDataSelection(data, '1-day dummy data loaded.');
+            });
+            if (modalGenWeek) modalGenWeek.addEventListener('click', () => {
+                const data = generateDummyFitbitData();
+                handleDataSelection(data, '7-day dummy data loaded.');
+            });
+            if (modalLoadSample) modalLoadSample.addEventListener('click', async () => {
+                try {
+                    const res = await fetch('sample-fitbit.json');
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const json = await res.json();
+                    handleDataSelection(json, 'Sample Fitbit data loaded.');
+                } catch (e) {
+                    showError('Could not load sample data.');
+                }
+            });
+
+            function handleDataSelection(json, successMsg) {
+                uploadedFitbitData = json;
+                const summary = buildFitbitSummary(json);
+                fitbitSummary.textContent = summary;
+                fitbitPreview.style.display = 'block';
+                closeModal();
+                if (successMsg) showError(successMsg);
+            }
 
             fitbitFileInput.addEventListener('change', async (e) => {
                 const file = e.target.files && e.target.files[0];
@@ -170,46 +223,9 @@
                 }
             }
 
-            // Load sample data from docs/sample-fitbit.json
-            if (sampleBtn) {
-                sampleBtn.addEventListener('click', async () => {
-                    try {
-                        const res = await fetch('sample-fitbit.json');
-                        if (!res.ok) throw new Error('HTTP ' + res.status);
-                        const json = await res.json();
-                        uploadedFitbitData = json;
-                        const summary = buildFitbitSummary(json);
-                        fitbitSummary.textContent = summary;
-                        fitbitPreview.style.display = 'block';
-                        showError('Sample Fitbit data loaded.');
-                    } catch (e) {
-                        showError('Could not load sample data.');
-                    }
-                });
-            }
+            // (Buttons removed in favor of modal)
 
-            // Generate dummy Fitbit data and download as JSON
-            if (generateBtn) {
-                generateBtn.addEventListener('click', () => {
-                    const data = generateDummyFitbitData();
-                    uploadedFitbitData = data;
-                    const summary = buildFitbitSummary(data);
-                    fitbitSummary.textContent = summary;
-                    fitbitPreview.style.display = 'block';
-                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `fitbit-dummy-${new Date().toISOString().slice(0,10)}.json`;
-                    document.body.appendChild(a);
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    a.remove();
-                    showError('Dummy Fitbit data generated and downloaded.');
-                });
-            }
-
-            function generateDummyFitbitData() {
+            function generateDummyFitbitData() { // 7-day dataset
                 const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
                 const toISODate = (d) => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
                 const today = new Date();
@@ -254,6 +270,32 @@
                     heart: latest.heart,
                     sleep: latest.sleep
                 };
+            }
+
+            function generateDummyDayData() { // 1-day dataset
+                const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+                const date = new Date().toISOString().slice(0,10);
+                const steps = randInt(3500, 14000);
+                const fairly = randInt(10, 60);
+                const very = randInt(5, 45);
+                const caloriesOut = randInt(1700, 3200);
+                const miles = parseFloat((steps / 2000).toFixed(2));
+                const restingHeartRate = randInt(55, 75);
+                const totalMinutesAsleep = randInt(320, 520);
+                const totalTimeInBed = totalMinutesAsleep + randInt(10, 80);
+                const activities = {
+                    summary: {
+                        steps,
+                        caloriesOut,
+                        fairlyActiveMinutes: fairly,
+                        veryActiveMinutes: very,
+                        distances: [{ activity: 'total', distance: miles }]
+                    },
+                    goals: { steps: 10000, activeMinutes: 30 }
+                };
+                const heart = { 'activities-heart': [{ dateTime: date, value: { restingHeartRate } }] };
+                const sleep = { summary: { totalMinutesAsleep, totalTimeInBed } };
+                return { activities, heart, sleep, date };
             }
 
             async function loadHistory() {
@@ -391,11 +433,9 @@
             <div class="card" id="auth-section">
                 <h2>Connect Your Fitbit</h2>
                 <p>Authorize via our hosted app or upload exported JSON for targeted coaching.</p>
-                <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                                <div style="display:flex; gap:12px; flex-wrap:wrap;">
                     <button id="connect-btn" class="btn btn-primary">Connect with Fitbit</button>
-                    <button id="upload-fitbit" class="btn btn-secondary">Upload Fitbit Data (JSON)</button>
-                    <button id="sample-fitbit" class="btn btn-secondary">Load Sample Data</button>
-                    <button id="generate-dummy" class="btn btn-secondary">Generate Dummy Data</button>
+                                        <button id="upload-fitbit" class="btn btn-secondary">Upload Fitbit Data</button>
                     <input type="file" id="fitbit-file" accept="application/json" style="display:none;" />
                 </div>
                 <div id="fitbit-preview" style="display:none; margin-top:14px; background:#f4f6f9; border:1px solid #e0e0e0; padding:12px; border-radius:8px;">
@@ -403,6 +443,23 @@
                    <div id="fitbit-summary" style="font-size:0.85rem; white-space:pre-wrap;"></div>
                 </div>
             </div>
+
+                        <!-- Modal for data selection -->
+                        <div id="fitbit-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); align-items:center; justify-content:center; z-index:1000;">
+                            <div style="background:#fff; width:min(520px, 92vw); border-radius:12px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                                    <h3 style="margin:0; color:#333;">Fitbit Data Options</h3>
+                                    <button id="fitbit-modal-close" class="btn" style="background:#e9ecef; color:#333;">Close</button>
+                                </div>
+                                <p style="color:#555; margin-bottom:14px;">Choose how to provide data for better, personalized coaching.</p>
+                                <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                                    <button id="fitbit-modal-upload" class="btn btn-secondary">Upload JSON File</button>
+                                    <button id="fitbit-modal-generate-day" class="btn btn-secondary">Generate 1 Day</button>
+                                    <button id="fitbit-modal-generate-week" class="btn btn-secondary">Generate 7 Days</button>
+                                    <button id="fitbit-modal-load-sample" class="btn btn-secondary">Load Sample</button>
+                                </div>
+                            </div>
+                        </div>
 
             <div class="card" id="llm-section">
                 <h2>Ask the Coach</h2>
