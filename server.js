@@ -314,7 +314,7 @@ app.post('/api/coach', async (req, res) => {
     // Build chat messages: inject data context into the system prompt for maximum adherence
     const hasUserPrompt = directPrompt && String(directPrompt).trim().length > 0;
     let promptForHistory = hasUserPrompt ? directPrompt.trim() : (fitbitData ? '(data-only)' : '(no user prompt)');
-    const baseSystem = 'You are an enthusiastic and supportive health coach. You MUST use any provided health data directly. Do NOT ask the user to provide data that is already given. Do NOT request clarifications about steps, activity, sleep, or heart rate when those values are present. If some categories are missing (e.g., nutrition), proceed with the available data without asking for more. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences). Start with a one-line summary that cites at least one concrete metric (e.g., average steps, active minutes, sleep hours, or resting HR) from the provided data before giving recommendations.';
+    const baseSystem = 'You are an enthusiastic and supportive health coach. You MUST use any provided health data directly. NEVER ask the user to provide data that is already given. Do NOT request clarifications about steps, activity, sleep, or heart rate when those values are present. If some categories are missing (e.g., nutrition), proceed with the available data without asking for more. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences). Start with a one-line summary that cites at least one concrete metric (e.g., average steps, active minutes, sleep hours, or resting HR) from the provided data before giving recommendations. Do NOT include questions in your response.';
     const systemContent = baseSystem;
     const dataContext = createCoachingPrompt(fitbitData || (useDemo ? demoActivities() : null));
     const userContent = (hasUserPrompt ? directPrompt.trim() : 'Provide a brief, encouraging coaching tip using the data above.') + '\n\nImportant: Do not ask me to provide any additional data. Use the data above and include at least one numeric metric in your response.';
@@ -338,6 +338,10 @@ app.post('/api/coach', async (req, res) => {
                 model: LLM_MODEL,
                 messages: [
                   { role: 'system', content: systemContent },
+                  // Few-shot example to demonstrate correct behavior
+                  { role: 'user', content: 'Data: Week 2025-11-01 → 2025-11-07 • Avg steps 8,200/day • Avg active 45/day • Avg sleep 7.2h • Today 6,300 steps • Avg RHR 66.\nPrompt: Create a weekly plan focused on walking and recovery.' },
+                  { role: 'assistant', content: 'Summary: With ~8,200 steps/day and 45 active minutes, you\'re on a solid base. Plan: Aim for 9,000–10,000 steps on 5 days, add two 20–25 min brisk walks, one light mobility day, and keep sleep near 7+ hours. Keep RHR steady by spreading effort across the week and finish days with 5–8 min easy stretching. No extra data needed—nice consistency.' },
+                  // Actual data + request
                   { role: 'user', content: dataContext },
                   { role: 'user', content: userContent }
                 ],
