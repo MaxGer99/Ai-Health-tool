@@ -32,8 +32,41 @@ LLM_API_KEY=your_llm_api_key
 LLM_MODEL=llama-3.1-70b-versatile (or your chosen model)
 ```
 
+If your upstream services require IP allowlisting (e.g., managed databases or LLM providers), add Render's outbound ranges:
+
+```
+74.220.50.0/24
+74.220.58.0/24
+```
+
+Fitbit OAuth requires an HTTPS callback URL (no IP-based callbacks). Set:
+`FITBIT_REDIRECT_URI=https://your-app-name.onrender.com/auth/fitbit/callback`
+
 ### Option 2: Run Locally
 Follow the setup instructions below to run on your local machine.
+
+## 🔒 Secrets & Environment Variables
+
+Sensitive values (API keys, client secrets) must NOT be committed to git. This repo already ignores `.env` via `.gitignore`.
+
+- Create your local env file:
+   ```
+   cp .env.example .env
+   ```
+   Edit `.env` with your real values. Do not commit this file.
+
+- For Render (production), use Render's dashboard to set env vars — never commit secrets:
+   - `FITBIT_CLIENT_ID`
+   - `FITBIT_CLIENT_SECRET`
+   - `FITBIT_REDIRECT_URI`
+   - `SESSION_SECRET`
+   - `LLM_API_URL`
+   - `LLM_API_KEY`
+
+Best practices:
+- Keep `.env` files out of git (already configured)
+- Use different secrets for dev vs prod
+- Rotate keys if accidentally committed
 
 ## Features
 

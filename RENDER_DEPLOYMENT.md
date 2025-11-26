@@ -8,6 +8,7 @@ This guide will help you deploy your Fitbit Health Coach application to Render's
 2. [Render account](https://render.com) (free)
 3. Your Fitbit API credentials
 4. LLM API endpoint (can be a public URL or another hosted service)
+5. No secrets committed to git — use Render environment variables
 
 ## Step 1: Prepare Your Fitbit App
 
@@ -54,6 +55,7 @@ This guide will help you deploy your Fitbit Health Coach application to Render's
    LLM_API_KEY = your_llm_api_key (if needed)
    LLM_MODEL = local-model
    ```
+   Do not commit these values to the repository. Keep secrets only in Render.
 
 5. **Deploy**
    - Click "Create Web Service"
@@ -125,6 +127,12 @@ Add this service to ping your app every 14 minutes:
 
 Configure to ping: `https://your-app-name.onrender.com/api/auth/status`
 
+## Security & Secrets Management
+
+- `.env` is ignored by git in this repo; use `.env.example` as a template locally.
+- For production, configure secrets only via Render's **Environment** settings.
+- Never commit API keys, client secrets, or session secrets.
+
 ## Troubleshooting
 
 ### Build Fails
@@ -146,6 +154,19 @@ Configure to ping: `https://your-app-name.onrender.com/api/auth/status`
 - Test LLM API endpoint with curl
 - Check API key is valid
 - Verify URL format is correct
+
+### IP Allowlist (Render Connect)
+If your upstream services (LLM provider, databases, firewalls, or APIs) require IP allowlisting, add Render's outbound CIDR ranges:
+
+```
+74.220.50.0/24
+74.220.58.0/24
+```
+
+Notes:
+- These are egress IP ranges used by Render; inbound IPs to your web service are managed by Render and may change.
+- Fitbit OAuth requires an HTTPS callback URL and does not support IP-based callbacks. Use:
+   `https://your-app-name.onrender.com/auth/fitbit/callback`.
 
 ## Testing Your Deployment
 

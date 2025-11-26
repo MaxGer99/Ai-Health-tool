@@ -117,10 +117,52 @@ app.get('/api/auth/status', (req, res) => {
   });
 });
 
+// Demo data helper
+function demoProfile() {
+  return {
+    user: {
+      displayName: 'Demo User',
+      fullName: 'Demo User',
+      memberSince: new Date(Date.now() - 365*24*60*60*1000).toISOString(),
+      avatar: ''
+    }
+  };
+}
+
+function demoActivities() {
+  const today = new Date().toISOString().split('T')[0];
+  return {
+    activities: {
+      summary: {
+        steps: 7321,
+        caloriesOut: 2150,
+        fairlyActiveMinutes: 28,
+        veryActiveMinutes: 12,
+        distances: [{ activity: 'total', distance: 3.85 }]
+      },
+      goals: {
+        steps: 10000,
+        activeMinutes: 30
+      }
+    },
+    heart: {
+      'activities-heart': [
+        { dateTime: today, value: { restingHeartRate: 62 } }
+      ]
+    },
+    sleep: {
+      summary: { totalMinutesAsleep: 412 }
+    },
+    date: today
+  };
+}
+
+const DEMO_MODE = (process.env.DEMO_MODE === 'true');
+
 // Get Fitbit user profile
 app.get('/api/fitbit/profile', async (req, res) => {
-  if (!req.session.accessToken) {
-    return res.status(401).json({ error: 'Not authenticated' });
+  if (DEMO_MODE || !req.session.accessToken) {
+    return res.json(demoProfile());
   }
   
   try {
@@ -133,8 +175,8 @@ app.get('/api/fitbit/profile', async (req, res) => {
 
 // Get today's activities
 app.get('/api/fitbit/activities', async (req, res) => {
-  if (!req.session.accessToken) {
-    return res.status(401).json({ error: 'Not authenticated' });
+  if (DEMO_MODE || !req.session.accessToken) {
+    return res.json(demoActivities());
   }
   
   try {
