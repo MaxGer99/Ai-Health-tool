@@ -475,6 +475,10 @@ function createCoachingPrompt(data) {
   if (activities?.summary?.distances?.[0]?.distance) {
     const distance = activities.summary.distances[0].distance.toFixed(2);
     prompt += `- Distance: ${distance} miles\n`;
+  } else if (typeof activities?.summary?.distance === 'number') {
+    // Some datasets provide a single numeric distance, often in km
+    const km = activities.summary.distance.toFixed(2);
+    prompt += `- Distance: ${km} km\n`;
   }
   
   // Heart rate
