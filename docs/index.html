@@ -83,6 +83,62 @@
                 window.location.href = 'https://ai-health-tool-1.onrender.com/';
             });
 
+            async function loadHistory() {
+                try {
+                    const res = await fetch('https://ai-health-tool-1.onrender.com/api/responses');
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    const items = data.items || [];
+                    const container = document.getElementById('history-items');
+                    if (!container) return;
+                    container.innerHTML = '';
+                    items.slice().reverse().forEach(r => {
+                        const div = document.createElement('div');
+                        div.style.padding = '10px';
+                        div.style.background = '#f4f6f9';
+                        div.style.borderRadius = '8px';
+                        div.style.borderLeft = '4px solid #2a9d8f';
+                        div.innerHTML = `<div style="font-size:0.7rem;color:#555;">${new Date(r.timestamp).toLocaleTimeString()}${r.rateLimited ? ' (rate limited)' : ''}</div><div style="font-size:0.8rem;font-weight:600;margin-bottom:4px;">Prompt: ${r.prompt ? r.prompt.replace(/</g,'&lt;') : '(generated)'}</div><div style="white-space:pre-wrap;font-size:0.85rem;">${(r.message||'').replace(/</g,'&lt;')}</div>`;
+                        container.appendChild(div);
+                    });
+                    const histWrapper = document.getElementById('history');
+                    if (items.length) histWrapper.style.display = 'block';
+                } catch(e) { console.warn('History load failed', e); }
+            }
+
+            function renderDayCards(message) {
+                const dayCardsEl = document.getElementById('day-cards');
+                dayCardsEl.innerHTML = '';
+                const dayRegex = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b.*$/mi;
+                if (!dayRegex.test(message)) { dayCardsEl.style.display = 'none'; return; }
+                const lines = message.split(/\n+/);
+                const groups = [];
+                let current = null;
+                const dayNameRegex = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b/i;
+                for (const line of lines) {
+                    if (dayNameRegex.test(line)) {
+                        if (current) groups.push(current);
+                        current = { day: line.split(':')[0], content: line.replace(/^[^:]*:\s?/, '') };
+                    } else if (current) {
+                        current.content += '\n' + line;
+                    }
+                }
+                if (current) groups.push(current);
+                if (!groups.length) { dayCardsEl.style.display = 'none'; return; }
+                groups.forEach(g => {
+                    const card = document.createElement('div');
+                    card.style.flex = '1 1 240px';
+                    card.style.background = '#ffffff';
+                    card.style.border = '1px solid #e0e0e0';
+                    card.style.borderRadius = '10px';
+                    card.style.padding = '12px';
+                    card.style.boxShadow = '0 2px 4px rgba(0,0,0,0.08)';
+                    card.innerHTML = `<div style="font-weight:600;color:#764ba2;margin-bottom:6px;">${g.day}</div><div style="white-space:pre-wrap;font-size:0.75rem;">${g.content.trim().replace(/</g,'&lt;')}</div>`;
+                    dayCardsEl.appendChild(card);
+                });
+                dayCardsEl.style.display = 'flex';
+            }
+
             submitBtn.addEventListener('click', async () => {
                 const prompt = (promptInput.value || '').trim();
                 if (!prompt) {
@@ -94,9 +150,7 @@
                 const originalSubmitText = 'Send Prompt';
                 coachingResponse.style.display = 'none';
                 errorSection.style.display = 'none';
-                
                 try {
-                    // Check queue status before sending request
                     try {
                         const qs = await fetch('https://ai-health-tool-1.onrender.com/api/queue/status');
                         if (qs.ok) {
@@ -115,8 +169,6 @@
                     if (!res.ok) {
                         const errorText = await res.text().catch(() => 'Unknown error');
                         console.error('API Error:', res.status, errorText);
-                        
-                        // Check if it's a rate limit error
                         if (res.status === 429 || errorText.includes('Too many requests')) {
                             throw new Error('Rate limited. Please wait a moment and try again.');
                         }
@@ -130,8 +182,11 @@
                     if (data.error) {
                         throw new Error(data.error);
                     }
-                    coachingText.textContent = data.message || 'No response from coach.';
+                    const msg = data.message || 'No response from coach.';
+                    coachingText.textContent = msg;
+                    renderDayCards(msg);
                     coachingResponse.style.display = 'block';
+                    await loadHistory();
                 } catch (err) {
                     console.error('Coaching error:', err);
                     showError(err.message || 'Network error. Is Render sleeping?');
@@ -146,6 +201,9 @@
                 errorMessage.textContent = msg;
                 setTimeout(() => { errorSection.style.display = 'none'; }, 4000);
             }
+
+            // Initial history load
+            loadHistory();
         });
     </script>
 </head>
@@ -179,11 +237,16 @@
                     <div class="coaching-message">
                         <div class="message-header"><strong>Your Coach Says:</strong></div>
                         <p id="coaching-text"></p>
+                        <div id="day-cards" style="display:none; flex-wrap:wrap; gap:12px; margin-top:12px;"></div>
                     </div>
                 </div>
                 <div id="error-section" class="error-card" style="display:none;">
                     <h3>Error</h3>
                     <p id="error-message"></p>
+                </div>
+                <div id="history" class="card" style="display:none; margin-top:18px;">
+                  <h3 style="margin-bottom:12px;">Recent Responses</h3>
+                  <div id="history-items" style="display:flex; flex-direction:column; gap:10px;"></div>
                 </div>
             </div>
 
