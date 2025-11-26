@@ -9,6 +9,10 @@
     "client": "cd client && npm start",
     "dev:full": "concurrently \"npm run dev\" \"npm run client\""
   },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
   "keywords": ["fitbit", "health", "coaching", "llm", "ai"],
   "author": "",
   "license": "MIT",

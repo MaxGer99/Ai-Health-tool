@@ -269,9 +269,19 @@ app.post('/api/auth/logout', (req, res) => {
   });
 });
 
+// Health check endpoint for monitoring
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV 
+  });
+});
+
 // Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Fitbit OAuth redirect: ${FITBIT_REDIRECT_URI}`);
   console.log(`🤖 LLM API URL: ${LLM_API_URL}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });

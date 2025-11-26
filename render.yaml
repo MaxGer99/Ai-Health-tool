@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: fitbit-health-coach
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: FITBIT_CLIENT_ID
+        sync: false
+      - key: FITBIT_CLIENT_SECRET
+        sync: false
+      - key: FITBIT_REDIRECT_URI
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_API_URL
+        sync: false
+      - key: LLM_MODEL
+        value: local-model

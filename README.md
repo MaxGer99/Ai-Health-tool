@@ -6,7 +6,34 @@ A web application that integrates with Fitbit API to fetch your health data and 
 
 **[View Full Documentation on GitHub Pages](https://maxger99.github.io/Ai-Health-tool/)**
 
-> **Note:** This is a full-stack application that requires a backend server. GitHub Pages only hosts the documentation. To run the application, follow the setup instructions below.
+> **Note:** This is a full-stack application that requires a backend server. GitHub Pages only hosts the documentation.
+
+## 🚀 Deployment Options
+
+### Option 1: Deploy to Render (Recommended - Free)
+See **[RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md)** for complete deployment instructions.
+
+Quick steps:
+1. Sign up at [Render.com](https://render.com)
+2. Connect your GitHub repository
+3. Add environment variables
+4. Deploy! Your app will be live at `https://your-app-name.onrender.com`
+
+Environment variables to set on Render:
+```
+NODE_ENV=production
+PORT=10000
+FITBIT_CLIENT_ID=your_fitbit_client_id
+FITBIT_CLIENT_SECRET=your_fitbit_client_secret
+FITBIT_REDIRECT_URI=https://your-app-name.onrender.com/auth/fitbit/callback
+SESSION_SECRET=<generate a random string>
+LLM_API_URL=https://api.groq.com/openai/v1 (or your chosen LLM)
+LLM_API_KEY=your_llm_api_key
+LLM_MODEL=llama-3.1-70b-versatile (or your chosen model)
+```
+
+### Option 2: Run Locally
+Follow the setup instructions below to run on your local machine.
 
 ## Features
 
