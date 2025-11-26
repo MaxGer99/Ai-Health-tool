@@ -437,6 +437,13 @@
                         throw new Error(data.error);
                     }
                     const msg = data.message || 'No response from coach.';
+                    // Show server-provided data synopsis above the message
+                    const cdu = document.getElementById('coaching-data-usage');
+                    const synopsis = data.dataSynopsis || buildUsageSynopsis(uploadedFitbitData);
+                    if (cdu) {
+                        cdu.textContent = synopsis || '';
+                        cdu.style.display = synopsis ? 'block' : 'none';
+                    }
                     coachingText.textContent = msg;
                     renderDayCards(msg);
                     coachingResponse.style.display = 'block';
@@ -516,6 +523,7 @@
                 <div id="coaching-response" style="display:none; margin-top:16px;">
                     <div class="coaching-message">
                         <div class="message-header"><strong>Your Coach Says:</strong></div>
+                        <div id="coaching-data-usage" style="display:none; margin:-4px 0 8px; font-size:0.85em; color:#2a6f6b; background:#e8f6f3; border:1px solid #bde5dc; padding:6px 8px; border-radius:6px;"></div>
                         <p id="coaching-text"></p>
                         <div id="day-cards" style="display:none; flex-wrap:wrap; gap:12px; margin-top:12px;"></div>
                     </div>

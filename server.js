@@ -32,7 +32,7 @@ app.use(cors({
   methods: ['GET','POST','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization']
 }));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use(express.static('public'));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
@@ -385,10 +385,13 @@ app.post('/api/coach', async (req, res) => {
       }
     }
 
+    // Build a concise data synopsis for the client to display
+    const dataSynopsis = buildDataSynopsis(fitbitData);
+
     let coachingMessage = llmResponse.data.choices?.[0]?.message?.content || 'No message generated.';
     coachingMessage = stripEmojis(coachingMessage);
-    saveResponse({ timestamp: new Date().toISOString(), prompt, message: coachingMessage });
-    res.json({ message: coachingMessage, queuePosition });
+    saveResponse({ timestamp: new Date().toISOString(), prompt, message: coachingMessage, dataSynopsis });
+    res.json({ message: coachingMessage, queuePosition, dataSynopsis });
 
   } catch (error) {
     console.error('LLM API error:', error.response?.data || error.message);
@@ -401,16 +404,18 @@ app.post('/api/coach', async (req, res) => {
       console.log('Rate limit exceeded, returning helpful fallback message');
       let fallback = 'Rate limit reached. Try again in a few minutes. Meanwhile, here is a tip: stay consistent with small daily actions - a 10-minute walk, proper hydration, and light stretching can build lasting momentum.';
       fallback = stripEmojis(fallback);
-      saveResponse({ timestamp: new Date().toISOString(), prompt, message: fallback, rateLimited: true });
-      return res.json({ message: fallback, rateLimited: true });
+      const dataSynopsis = buildDataSynopsis(fitbitData);
+      saveResponse({ timestamp: new Date().toISOString(), prompt, message: fallback, rateLimited: true, dataSynopsis });
+      return res.json({ message: fallback, rateLimited: true, dataSynopsis });
     }
     
     // If LLM fails, return a graceful demo-friendly message when demo was requested
     if (useDemo) {
       let demoMsg = 'Here is a quick coaching tip while the AI is warming up: keep it consistent today. Add a 10-15 minute walk, hydrate, and wind down with light stretching. Small steps build big momentum - nice work!';
       demoMsg = stripEmojis(demoMsg);
-      saveResponse({ timestamp: new Date().toISOString(), prompt, message: demoMsg, demo: true });
-      return res.json({ message: demoMsg });
+      const dataSynopsis = buildDataSynopsis(fitbitData);
+      saveResponse({ timestamp: new Date().toISOString(), prompt, message: demoMsg, demo: true, dataSynopsis });
+      return res.json({ message: demoMsg, dataSynopsis });
     }
     saveResponse({ timestamp: new Date().toISOString(), prompt, message: 'Failed to get coaching response', error: true });
     res.status(502).json({ error: 'Failed to get coaching response', details: error.message });
@@ -496,6 +501,40 @@ function createCoachingPrompt(data) {
   prompt += '\nProvide encouraging and personalized feedback on their progress. Highlight what they\'re doing well and offer gentle motivation for improvement.';
   
   return prompt;
+}
+
+// Build concise one-line synopsis of data used
+function buildDataSynopsis(data) {
+  if (!data) return '';
+  try {
+    if (Array.isArray(data.days) && data.days.length) {
+      const days = data.days;
+      let totalSteps = 0, totalActive = 0, totalSleepMin = 0, rhrSum = 0, rhrCount = 0;
+      days.forEach(d => {
+        const s = d.activities?.summary || {};
+        totalSteps += s.steps || 0;
+        totalActive += (s.fairlyActiveMinutes || 0) + (s.veryActiveMinutes || 0);
+        const sm = d.sleep?.summary?.totalMinutesAsleep;
+        if (typeof sm === 'number') totalSleepMin += sm;
+        const rhr = d.heart?.['activities-heart']?.[0]?.value?.restingHeartRate;
+        if (typeof rhr === 'number') { rhrSum += rhr; rhrCount++; }
+      });
+      const avgSteps = Math.round(totalSteps / days.length).toLocaleString();
+      const avgActive = Math.round(totalActive / days.length);
+      const avgSleepHrs = (totalSleepMin / days.length / 60).toFixed(1);
+      const avgRHR = rhrCount ? Math.round(rhrSum / rhrCount) : null;
+      const latest = days[days.length - 1];
+      const latestSteps = (latest.activities?.summary?.steps || 0).toLocaleString();
+      return `Using 7-day dataset: ${days[0].date} → ${days[days.length - 1].date} • Avg steps ${avgSteps}/day • Avg active ${avgActive}/day • Avg sleep ${avgSleepHrs}h • Today ${latestSteps} steps${avgRHR ? ` • Avg RHR ${avgRHR}` : ''}`;
+    }
+    const steps = data.activities?.summary?.steps;
+    const fairly = data.activities?.summary?.fairlyActiveMinutes || 0;
+    const very = data.activities?.summary?.veryActiveMinutes || 0;
+    const sleepMin = data.sleep?.summary?.totalMinutesAsleep || data.sleep?.totalMinutesAsleep;
+    const sleepHrs = sleepMin ? (sleepMin / 60).toFixed(1) : null;
+    const date = data.date || new Date().toISOString().slice(0,10);
+    return `Using 1-day dataset: ${date} • Steps ${steps?.toLocaleString?.() || steps || 0} • Active ${fairly + very} •${sleepHrs ? ` Sleep ${sleepHrs}h` : ' Sleep n/a'}`;
+  } catch { return ''; }
 }
 
 // Logout
