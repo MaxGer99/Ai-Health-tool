@@ -345,7 +345,7 @@ app.post('/api/coach', async (req, res) => {
                 messages: [
                   {
                     role: 'system',
-                    content: 'You are an enthusiastic and supportive health coach. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences).'
+                    content: 'You are an enthusiastic and supportive health coach. Use any provided health data directly; do not ask the user to provide data that is already given. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences).'
                   },
                   { role: 'user', content: prompt }
                 ],
@@ -498,7 +498,44 @@ function createCoachingPrompt(data) {
     prompt += `- Sleep: ${hours}h ${minutes}m\n`;
   }
   
-  prompt += '\nProvide encouraging and personalized feedback on their progress. Highlight what they\'re doing well and offer gentle motivation for improvement.';
+  // Add a compact JSON block to make the data unambiguous for the model
+  try {
+    const summary = {};
+    if (Array.isArray(data.days) && data.days.length) {
+      const days = data.days;
+      let totalSteps = 0, totalActive = 0, totalSleepMin = 0, rhrSum = 0, rhrCount = 0;
+      days.forEach(d => {
+        const s = d.activities?.summary || {};
+        totalSteps += s.steps || 0;
+        totalActive += (s.fairlyActiveMinutes || 0) + (s.veryActiveMinutes || 0);
+        const sm = d.sleep?.summary?.totalMinutesAsleep;
+        if (typeof sm === 'number') totalSleepMin += sm;
+        const rhr = d.heart?.['activities-heart']?.[0]?.value?.restingHeartRate;
+        if (typeof rhr === 'number') { rhrSum += rhr; rhrCount++; }
+      });
+      summary.period = { start: days[0].date, end: days[days.length - 1].date };
+      summary.avgStepsPerDay = Math.round(totalSteps / days.length);
+      summary.avgActiveMinutesPerDay = Math.round(totalActive / days.length);
+      summary.avgSleepHoursPerDay = Number((totalSleepMin / days.length / 60).toFixed(1));
+      if (rhrCount) summary.avgRestingHR = Math.round(rhrSum / rhrCount);
+    }
+    const s = activities?.summary || {};
+    const rhr = heart?.['activities-heart']?.[0]?.value?.restingHeartRate;
+    const sleepMin = sleep?.summary?.totalMinutesAsleep;
+    summary.today = {
+      steps: typeof s.steps === 'number' ? s.steps : undefined,
+      activeMinutes: (s.fairlyActiveMinutes || 0) + (s.veryActiveMinutes || 0),
+      distanceMiles: Array.isArray(s.distances) && s.distances[0]?.distance ? Number(s.distances[0].distance.toFixed(2)) : undefined,
+      distanceKm: typeof s.distance === 'number' ? Number(s.distance.toFixed(2)) : undefined,
+      caloriesOut: s.caloriesOut,
+      restingHR: rhr,
+      sleepHours: typeof sleepMin === 'number' ? Number((sleepMin/60).toFixed(1)) : undefined
+    };
+    const jsonBlock = 'Data (JSON):\n' + '```json\n' + JSON.stringify(summary, null, 2) + '\n```\n';
+    prompt += '\n' + jsonBlock;
+  } catch (_) { /* ignore */ }
+
+  prompt += '\nProvide encouraging and personalized feedback on their progress. Use the data above directly and do not ask the user to restate it. Highlight what they\'re doing well and offer gentle motivation for improvement.';
   
   return prompt;
 }
