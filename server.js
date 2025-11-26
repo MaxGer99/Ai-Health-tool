@@ -45,6 +45,24 @@ const LLM_API_KEY = process.env.LLM_API_KEY || process.env.GITHUB_TOKEN;
 const LLM_API_URL = process.env.LLM_API_URL || 'https://models.github.ai/inference';
 const LLM_MODEL = process.env.LLM_MODEL || 'openai/gpt-4o-mini';
 
+// Rate limiting for LLM API calls
+let lastLLMCallTime = 0;
+const MIN_TIME_BETWEEN_CALLS = 2000; // 2 seconds between requests
+
+async function throttledLLMCall(requestFn) {
+  const now = Date.now();
+  const timeSinceLastCall = now - lastLLMCallTime;
+  
+  if (timeSinceLastCall < MIN_TIME_BETWEEN_CALLS) {
+    const waitTime = MIN_TIME_BETWEEN_CALLS - timeSinceLastCall;
+    console.log(`Throttling: waiting ${waitTime}ms before next API call`);
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+  
+  lastLLMCallTime = Date.now();
+  return await requestFn();
+}
+
 // Helper function to make Fitbit API calls
 async function callFitbitAPI(endpoint, accessToken) {
   try {
@@ -233,37 +251,39 @@ app.post('/api/coach', async (req, res) => {
       return res.status(400).json({ error: 'No prompt or data provided' });
     }
 
-    // Call the LLM API with retry logic for rate limits
+    // Call the LLM API with retry logic for rate limits and throttling
     let llmResponse;
     let retries = 2;
     
     while (retries >= 0) {
       try {
-        llmResponse = await axios.post(
-          `${LLM_API_URL}/chat/completions`,
-          {
-            model: LLM_MODEL,
-            messages: [
-              {
-                role: 'system',
-                content: 'You are an enthusiastic and supportive health coach. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences).'
-              },
-              { role: 'user', content: prompt }
-            ],
-            temperature: 0.7,
-            max_completion_tokens: 300
-          },
-          {
-            headers: LLM_API_KEY ? {
-              'Authorization': `Bearer ${LLM_API_KEY}`,
-              'Content-Type': 'application/json',
-              'User-Agent': 'ai-health-tool'
-            } : {
-              'Content-Type': 'application/json',
-              'User-Agent': 'ai-health-tool'
+        llmResponse = await throttledLLMCall(async () => {
+          return await axios.post(
+            `${LLM_API_URL}/chat/completions`,
+            {
+              model: LLM_MODEL,
+              messages: [
+                {
+                  role: 'system',
+                  content: 'You are an enthusiastic and supportive health coach. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences).'
+                },
+                { role: 'user', content: prompt }
+              ],
+              temperature: 0.7,
+              max_completion_tokens: 300
+            },
+            {
+              headers: LLM_API_KEY ? {
+                'Authorization': `Bearer ${LLM_API_KEY}`,
+                'Content-Type': 'application/json',
+                'User-Agent': 'ai-health-tool'
+              } : {
+                'Content-Type': 'application/json',
+                'User-Agent': 'ai-health-tool'
+              }
             }
-          }
-        );
+          );
+        });
         break; // Success, exit retry loop
       } catch (apiError) {
         const status = apiError.response?.status;
