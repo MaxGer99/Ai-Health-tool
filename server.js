@@ -59,6 +59,8 @@ const FITBIT_REDIRECT_URI = process.env.FITBIT_REDIRECT_URI;
 // LLM Configuration (prefer LLM_API_KEY, fallback to GITHUB_TOKEN for GitHub Models)
 const LLM_API_KEY = process.env.LLM_API_KEY || process.env.GITHUB_TOKEN;
 // Default to GitHub Models inference endpoint if not provided
+// For GitHub Models: https://models.github.com/api (using gpt-4o-mini model)
+// For Groq: https://api.groq.com/openai/v1 (using llama-3.1-70b-versatile model)
 const LLM_API_URL = process.env.LLM_API_URL || 'https://models.github.com/api';
 const LLM_MODEL = process.env.LLM_MODEL || 'gpt-4o-mini';
 
@@ -441,27 +443,14 @@ app.post('/api/coach', async (req, res) => {
       saveResponse({ timestamp: new Date().toISOString(), prompt: promptForHistory, message: fallback, rateLimited: true, dataSynopsis });
       return res.json({ message: fallback, rateLimited: true, dataSynopsis });
     }
-    
-    // If LLM fails, return a graceful demo-friendly message when demo was requested
-    if (useDemo) {
-      let demoMsg = 'Here is a quick coaching tip while the AI is warming up: keep it consistent today. Add a 10-15 minute walk, hydrate, and wind down with light stretching. Small steps build big momentum - nice work!';
-      demoMsg = stripEmojis(demoMsg);
-      const dataSynopsis = buildDataSynopsis(fitbitData);
-      saveResponse({ timestamp: new Date().toISOString(), prompt: promptForHistory, message: demoMsg, demo: true, dataSynopsis });
-      return res.json({ message: demoMsg, dataSynopsis });
-    }
 
-    // LLM failed and no demo mode - return error
-    const errorDetails = error.message || 'Unknown error';
-    const isAuthError = error.response?.status === 401;
-    
-    if (isAuthError) {
-      saveResponse({ timestamp: new Date().toISOString(), prompt: promptForHistory, message: 'Authentication failed: invalid or expired GitHub token', error: true });
-      return res.status(401).json({ message: 'LLM authentication failed. Verify GITHUB_TOKEN in environment.', details: 'Invalid or expired GitHub token' });
-    }
-    
-    saveResponse({ timestamp: new Date().toISOString(), prompt: promptForHistory, message: 'Failed to get coaching response', error: true });
-    res.status(502).json({ message: 'Failed to get coaching response', details: errorDetails });
+    // If LLM fails, return a graceful fallback message
+    console.log('LLM API failed, returning fallback message. Error:', error.message);
+    let fallbackMsg = 'AI coaching temporarily unavailable. Here is a quick tip: keep it consistent today. Add a 10-15 minute walk, hydrate, and wind down with light stretching. Small steps build big momentum - nice work!';
+    fallbackMsg = stripEmojis(fallbackMsg);
+    const dataSynopsis = buildDataSynopsis(fitbitData);
+    saveResponse({ timestamp: new Date().toISOString(), prompt: promptForHistory, message: fallbackMsg, fallback: true, dataSynopsis });
+    return res.json({ message: fallbackMsg, fallback: true, dataSynopsis });
   }
 });
 

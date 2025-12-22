@@ -17,8 +17,8 @@ A web application that connects to Fitbit to fetch your health data and uses Git
    FITBIT_REDIRECT_URI=https://your-app-name.onrender.com/auth/fitbit/callback
    SESSION_SECRET=generate_random_string
    GITHUB_TOKEN=your_github_pat
-   LLM_API_URL=https://models.github.ai/inference
-   LLM_MODEL=openai/gpt-4o-mini
+   LLM_API_URL=https://models.github.com/api
+   LLM_MODEL=gpt-4o-mini
    ```
 4. Deploy and visit your live app at `https://your-app-name.onrender.com`
 
@@ -76,9 +76,10 @@ PORT                     # Server port (default: 3001)
 
 ## Troubleshooting
 
-- **Unauthorized LLM error**: Verify `GITHUB_TOKEN` is set correctly
+- **AI coaching shows fallback message**: GitHub Models API may be unreachable or misconfigured. The app returns a helpful fallback message instead of failing.
+- **Unauthorized LLM error**: Verify `GITHUB_TOKEN` is set and has "models" scope at [github.com/settings/tokens](https://github.com/settings/tokens)
 - **Fitbit auth fails**: Check callback URL matches exactly in Fitbit app settings
-- **CORS issues**: Ensure Origin header is sent from client
+- **CORS issues**: Ensure you're visiting the app at its actual URL, not a different origin
 
 ## License
 
