@@ -354,6 +354,10 @@ app.post('/api/coach', async (req, res) => {
               console.log('LLM messages preview:', JSON.stringify(preview, null, 2));
             }
 
+            if (!LLM_API_KEY) {
+              throw new Error('GitHub token not configured. Set GITHUB_TOKEN environment variable.');
+            }
+
             return await axios.post(
               `${LLM_API_URL}/chat/completions`,
               {
@@ -363,11 +367,8 @@ app.post('/api/coach', async (req, res) => {
                 max_completion_tokens: 300
               },
               {
-                headers: LLM_API_KEY ? {
+                headers: {
                   'Authorization': `Bearer ${LLM_API_KEY}`,
-                  'Content-Type': 'application/json',
-                  'User-Agent': 'ai-health-tool'
-                } : {
                   'Content-Type': 'application/json',
                   'User-Agent': 'ai-health-tool'
                 }
@@ -427,8 +428,10 @@ app.post('/api/coach', async (req, res) => {
       saveResponse({ timestamp: new Date().toISOString(), prompt: promptForHistory, message: demoMsg, demo: true, dataSynopsis });
       return res.json({ message: demoMsg, dataSynopsis });
     }
+
+    // LLM failed and no demo mode - return error
     saveResponse({ timestamp: new Date().toISOString(), prompt: promptForHistory, message: 'Failed to get coaching response', error: true });
-    res.status(502).json({ error: 'Failed to get coaching response', details: error.message });
+    res.status(502).json({ message: 'Failed to get coaching response', details: error.message });
   }
 });
 
