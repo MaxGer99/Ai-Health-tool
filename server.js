@@ -24,6 +24,10 @@ app.use(cors({
     if (!origin) return callback(null, true);
     // Allow GitHub Pages (with any path)
     if (origin.startsWith('https://maxger99.github.io')) return callback(null, true);
+    // Allow self-origin (Render app accessing itself)
+    if (origin.includes('onrender.com')) return callback(null, true);
+    // Allow localhost for development
+    if (origin.startsWith('http://localhost')) return callback(null, true);
     // Allow configured origins
     if (allowedOrigins.includes(origin)) return callback(null, true);
     // Allow all for debugging (can be restricted later)
@@ -32,6 +36,7 @@ app.use(cors({
   credentials: true,
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization'],
+  exposedHeaders: ['Content-Type'],
   maxAge: 86400 // Cache preflight for 24 hours
 }));
 
@@ -54,8 +59,8 @@ const FITBIT_REDIRECT_URI = process.env.FITBIT_REDIRECT_URI;
 // LLM Configuration (prefer LLM_API_KEY, fallback to GITHUB_TOKEN for GitHub Models)
 const LLM_API_KEY = process.env.LLM_API_KEY || process.env.GITHUB_TOKEN;
 // Default to GitHub Models inference endpoint if not provided
-const LLM_API_URL = process.env.LLM_API_URL || 'https://models.github.ai/inference';
-const LLM_MODEL = process.env.LLM_MODEL || 'openai/gpt-4o-mini';
+const LLM_API_URL = process.env.LLM_API_URL || 'https://models.github.com/api';
+const LLM_MODEL = process.env.LLM_MODEL || 'gpt-4o-mini';
 
 // Response persistence (last 500 kept)
 const RESPONSES_FILE = path.join(__dirname, 'responses.json');
@@ -361,8 +366,13 @@ app.post('/api/coach', async (req, res) => {
               throw new Error('GitHub token not configured. Set GITHUB_TOKEN environment variable.');
             }
 
+            // Log request details for debugging
+            const requestUrl = `${LLM_API_URL}/chat/completions`;
+            const tokenPreview = LLM_API_KEY.substring(0, 10) + '...' + LLM_API_KEY.substring(LLM_API_KEY.length - 5);
+            console.log('LLM Request:', { url: requestUrl, model: LLM_MODEL, tokenPreview, apiUrl: LLM_API_URL });
+
             return await axios.post(
-              `${LLM_API_URL}/chat/completions`,
+              requestUrl,
               {
                 model: LLM_MODEL,
                 messages,
@@ -414,6 +424,9 @@ app.post('/api/coach', async (req, res) => {
     if (error.response?.status === 401) {
       console.error('Authentication failed. Check GITHUB_TOKEN is valid and has "models" scope.');
       console.error('Token configured:', Boolean(LLM_API_KEY));
+      console.error('API URL:', LLM_API_URL);
+      console.error('Model:', LLM_MODEL);
+      console.error('Full error response:', JSON.stringify(error.response?.data, null, 2));
     }
     
     // Check if it's a rate limit error
@@ -678,12 +691,29 @@ app.get('/api/github/check', async (req, res) => {
   }
 });
 
+// Global error handler to ensure CORS headers are always sent
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err.message);
+  
+  // Ensure CORS headers are set
+  const origin = req.get('origin');
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  
+  res.status(err.status || 500).json({
+    message: 'Internal server error',
+    details: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
+
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Fitbit OAuth redirect: ${FITBIT_REDIRECT_URI}`);
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Fitbit OAuth redirect: ${FITBIT_REDIRECT_URI}`);
   console.log(`LLM API URL: ${LLM_API_URL}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   const llmConfigured = Boolean(LLM_API_URL && LLM_MODEL && LLM_API_KEY);
-  console.log(`🧠 LLM configured: ${llmConfigured ? 'yes' : 'no'} (model: ${LLM_MODEL})`);
+  console.log(`LLM configured: ${llmConfigured ? 'yes' : 'no'} (model: ${LLM_MODEL})`);
 });
