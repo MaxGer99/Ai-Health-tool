@@ -314,11 +314,14 @@ app.get('/api/fitbit/activities', async (req, res) => {
 app.post('/api/coach', async (req, res) => {
   const { fitbitData, prompt: directPrompt, demo } = req.body || {};
   const useDemo = demo === true || demo === 'true' || process.env.DEMO_MODE === 'true';
+  
+  // Declare promptForHistory outside try block so it's accessible in catch
+  let promptForHistory = '';
 
   try {
     // Build chat messages: inject data context into the system prompt for maximum adherence
     const hasUserPrompt = directPrompt && String(directPrompt).trim().length > 0;
-    let promptForHistory = hasUserPrompt ? directPrompt.trim() : (fitbitData ? '(data-only)' : '(no user prompt)');
+    promptForHistory = hasUserPrompt ? directPrompt.trim() : (fitbitData ? '(data-only)' : '(no user prompt)');
     const baseSystem = 'You are an enthusiastic and supportive health coach. You MUST use any provided health data directly. NEVER ask the user to provide data that is already given. Do NOT request clarifications about steps, activity, sleep, or heart rate when those values are present. If some categories are missing (e.g., nutrition), proceed with the available data without asking for more. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences). Respond in this exact format without any questions or requests: \n\nSummary: <one sentence that cites at least one numeric metric from the data (e.g., average steps, active minutes, sleep hours, resting HR)>.\nPlan: <3–5 short bullet lines or sentences with concrete actions tailored to the data>.\nRecovery: <one sentence on rest/recovery based on the data>.\nMotivation: <one short encouraging sentence>.\n\nDo NOT include questions in your response.';
     const systemContent = baseSystem;
     const dataContext = createCoachingPrompt(fitbitData || (useDemo ? demoActivities() : null));
@@ -405,7 +408,13 @@ app.post('/api/coach', async (req, res) => {
     res.json({ message: coachingMessage, queuePosition, dataSynopsis });
 
   } catch (error) {
-    console.error('LLM API error:', error.response?.data || error.message);
+    console.error('LLM API error:', error.response?.status, error.response?.data || error.message);
+    
+    // Log more details for debugging authorization errors
+    if (error.response?.status === 401) {
+      console.error('Authentication failed. Check GITHUB_TOKEN is valid and has "models" scope.');
+      console.error('Token configured:', Boolean(LLM_API_KEY));
+    }
     
     // Check if it's a rate limit error
     const isRateLimit = error.response?.status === 429 || 
@@ -430,8 +439,16 @@ app.post('/api/coach', async (req, res) => {
     }
 
     // LLM failed and no demo mode - return error
+    const errorDetails = error.message || 'Unknown error';
+    const isAuthError = error.response?.status === 401;
+    
+    if (isAuthError) {
+      saveResponse({ timestamp: new Date().toISOString(), prompt: promptForHistory, message: 'Authentication failed: invalid or expired GitHub token', error: true });
+      return res.status(401).json({ message: 'LLM authentication failed. Verify GITHUB_TOKEN in environment.', details: 'Invalid or expired GitHub token' });
+    }
+    
     saveResponse({ timestamp: new Date().toISOString(), prompt: promptForHistory, message: 'Failed to get coaching response', error: true });
-    res.status(502).json({ message: 'Failed to get coaching response', details: error.message });
+    res.status(502).json({ message: 'Failed to get coaching response', details: errorDetails });
   }
 });
 
