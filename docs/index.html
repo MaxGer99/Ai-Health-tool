@@ -47,47 +47,18 @@
 
             // Check configuration on page load
             checkConfig();
-
             async function checkConfig() {
-                // Visual feedback while checking
-                if (checkConfigBtn) {
-                    checkConfigBtn.disabled = true;
-                    const originalText = checkConfigBtn.textContent;
-                    checkConfigBtn.textContent = 'Checking...';
-                    // restore after check completes
-                    var restoreText = () => { checkConfigBtn.disabled = false; checkConfigBtn.textContent = originalText; };
-                }
-                try {
-                    const res = await fetch('https://ai-health-tool-1.onrender.com/health');
-                    const data = await res.json();
-                    console.log('Health config:', data);
-                    
-                    if (!data.llmConfigured) {
-                        configWarning.style.display = 'block';
-                        configMessage.textContent = 'LLM not configured on Render. Set GITHUB_TOKEN, LLM_API_URL, and LLM_MODEL in environment variables, then redeploy.';
-                        const s = document.getElementById('config-status');
-                        if (s) s.textContent = `Last check: ${new Date().toLocaleTimeString()} • LLM not configured`;
-                    } else if (!data.hasGithubToken) {
-                        configWarning.style.display = 'block';
-                        configMessage.textContent = 'GitHub token missing. Add GITHUB_TOKEN to Render environment.';
-                        const s = document.getElementById('config-status');
-                        if (s) s.textContent = `Last check: ${new Date().toLocaleTimeString()} • Token missing`;
-                    } else {
-                        configWarning.style.display = 'none';
-                        const s = document.getElementById('config-status');
-                        if (s) s.textContent = `Last check: ${new Date().toLocaleTimeString()} • OK`;
-                    }
-                } catch (err) {
-                    console.error('Could not check config:', err.message);
-                    configWarning.style.display = 'block';
-                    configMessage.textContent = 'Unable to reach backend. This is normal if Render is sleeping.';
-                    const s = document.getElementById('config-status');
-                    if (s) s.textContent = `Last check: ${new Date().toLocaleTimeString()} • Unreachable`;
-                }
-                if (typeof restoreText === 'function') restoreText();
+                // Disable config checks from GitHub Pages due to CORS limitations
+                // Users should visit the app directly at https://ai-health-tool-1.onrender.com/
+                configWarning.style.display = 'block';
+                configMessage.textContent = 'This is a documentation page. Visit the live app at https://ai-health-tool-1.onrender.com/ to use the AI Health Coach.';
+                const s = document.getElementById('config-status');
+                if (s) s.textContent = 'Documentation page - visit the live app';
             }
 
-            checkConfigBtn.addEventListener('click', checkConfig);
+            checkConfigBtn.addEventListener('click', () => {
+                window.location.href = 'https://ai-health-tool-1.onrender.com/';
+            });
 
             connectBtn.addEventListener('click', () => {
                 window.location.href = 'https://ai-health-tool-1.onrender.com/';
@@ -336,26 +307,8 @@
             }
 
             async function loadHistory() {
-                try {
-                    const res = await fetch('https://ai-health-tool-1.onrender.com/api/responses');
-                    if (!res.ok) return;
-                    const data = await res.json();
-                    const items = data.items || [];
-                    const container = document.getElementById('history-items');
-                    if (!container) return;
-                    container.innerHTML = '';
-                    items.slice().reverse().forEach(r => {
-                        const div = document.createElement('div');
-                        div.style.padding = '10px';
-                        div.style.background = '#f4f6f9';
-                        div.style.borderRadius = '8px';
-                        div.style.borderLeft = '4px solid #2a9d8f';
-                        div.innerHTML = `<div style="font-size:0.7rem;color:#555;">${new Date(r.timestamp).toLocaleTimeString()}${r.rateLimited ? ' (rate limited)' : ''}</div><div style="font-size:0.8rem;font-weight:600;margin-bottom:4px;">Prompt: ${r.prompt ? r.prompt.replace(/</g,'&lt;') : '(generated)'}</div><div style="white-space:pre-wrap;font-size:0.85rem;">${(r.message||'').replace(/</g,'&lt;')}</div>`;
-                        container.appendChild(div);
-                    });
-                    const histWrapper = document.getElementById('history');
-                    if (items.length) histWrapper.style.display = 'block';
-                } catch(e) { console.warn('History load failed', e); }
+                // History disabled on documentation page due to CORS
+                // Visit the live app at https://ai-health-tool-1.onrender.com/ to see history
             }
 
             function renderDayCards(message) {
@@ -397,65 +350,7 @@
                     showError('Please enter a prompt first.');
                     return;
                 }
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'Thinking...';
-                const originalSubmitText = 'Send Prompt';
-                coachingResponse.style.display = 'none';
-                errorSection.style.display = 'none';
-                try {
-                    try {
-                        const qs = await fetch('https://ai-health-tool-1.onrender.com/api/queue/status');
-                        if (qs.ok) {
-                            const q = await qs.json();
-                            if (q.queueDepth > 0) {
-                                showError(`Queued, position ${q.queueDepth}. Processing soon...`);
-                            }
-                        }
-                    } catch (_) {}
-                    
-                    console.log('Sending coach request payload:', { prompt, demo: false });
-                    
-                    const res = await fetch('https://ai-health-tool-1.onrender.com/api/coach', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt, demo: false, fitbitData: uploadedFitbitData })
-                    });
-                    
-                    if (!res.ok) {
-                        const errorText = await res.text().catch(() => 'Unknown error');
-                        console.error('API Error:', res.status, errorText);
-                        if (res.status === 429 || errorText.includes('Too many requests')) {
-                            throw new Error('Rate limited. Please wait a moment and try again.');
-                        }
-                        throw new Error(`Server error (${res.status}). Check Render logs.`);
-                    }
-                    const data = await res.json();
-                    console.log('Coach response:', data);
-                    if (typeof data.queuePosition === 'number' && data.queuePosition > 0) {
-                        showError(`Request was queued (position ${data.queuePosition}).`);
-                    }
-                    if (data.error) {
-                        throw new Error(data.error);
-                    }
-                    const msg = data.message || 'No response from coach.';
-                    // Show server-provided data synopsis above the message
-                    const cdu = document.getElementById('coaching-data-usage');
-                    const synopsis = data.dataSynopsis || buildUsageSynopsis(uploadedFitbitData);
-                    if (cdu) {
-                        cdu.textContent = synopsis || '';
-                        cdu.style.display = synopsis ? 'block' : 'none';
-                    }
-                    coachingText.textContent = msg;
-                    renderDayCards(msg);
-                    coachingResponse.style.display = 'block';
-                    await loadHistory();
-                } catch (err) {
-                    console.error('Coaching error:', err);
-                    showError(err.message || 'Network error. Is Render sleeping?');
-                } finally {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = originalSubmitText;
-                }
+                showError('This is a documentation page. Visit https://ai-health-tool-1.onrender.com/ to use the AI Health Coach.');
             });
 
             function showError(msg) {
