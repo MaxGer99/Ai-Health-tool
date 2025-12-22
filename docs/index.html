@@ -58,14 +58,7 @@
                     var restoreText = () => { checkConfigBtn.disabled = false; checkConfigBtn.textContent = originalText; };
                 }
                 try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 5000);
-                    
-                    const res = await fetch('https://ai-health-tool-1.onrender.com/health', {
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    
+                    const res = await fetch('https://ai-health-tool-1.onrender.com/health');
                     const data = await res.json();
                     console.log('Health config:', data);
                     
@@ -81,15 +74,13 @@
                         if (s) s.textContent = `Last check: ${new Date().toLocaleTimeString()} • Token missing`;
                     } else {
                         configWarning.style.display = 'none';
-                        // Provide success feedback
-                        showError('Configuration looks good.');
                         const s = document.getElementById('config-status');
                         if (s) s.textContent = `Last check: ${new Date().toLocaleTimeString()} • OK`;
                     }
                 } catch (err) {
                     console.error('Could not check config:', err.message);
                     configWarning.style.display = 'block';
-                    configMessage.textContent = 'Unable to reach health endpoint. Render may be sleeping or unreachable.';
+                    configMessage.textContent = 'Unable to reach backend. This is normal if Render is sleeping.';
                     const s = document.getElementById('config-status');
                     if (s) s.textContent = `Last check: ${new Date().toLocaleTimeString()} • Unreachable`;
                 }
@@ -346,14 +337,7 @@
 
             async function loadHistory() {
                 try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 5000);
-                    
-                    const res = await fetch('https://ai-health-tool-1.onrender.com/api/responses', {
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    
+                    const res = await fetch('https://ai-health-tool-1.onrender.com/api/responses');
                     if (!res.ok) return;
                     const data = await res.json();
                     const items = data.items || [];
@@ -420,14 +404,7 @@
                 errorSection.style.display = 'none';
                 try {
                     try {
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 3000);
-                        
-                        const qs = await fetch('https://ai-health-tool-1.onrender.com/api/queue/status', {
-                            signal: controller.signal
-                        });
-                        clearTimeout(timeoutId);
-                        
+                        const qs = await fetch('https://ai-health-tool-1.onrender.com/api/queue/status');
                         if (qs.ok) {
                             const q = await qs.json();
                             if (q.queueDepth > 0) {
@@ -438,16 +415,13 @@
                     
                     console.log('Sending coach request payload:', { prompt, demo: false });
                     
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 30000);
-                    
                     const res = await fetch('https://ai-health-tool-1.onrender.com/api/coach', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt, demo: false, fitbitData: uploadedFitbitData }),
-                        signal: controller.signal
+                        body: JSON.stringify({ prompt, demo: false, fitbitData: uploadedFitbitData })
                     });
-                    clearTimeout(timeoutId);
+                    
+                    if (!res.ok) {
                         const errorText = await res.text().catch(() => 'Unknown error');
                         console.error('API Error:', res.status, errorText);
                         if (res.status === 429 || errorText.includes('Too many requests')) {
