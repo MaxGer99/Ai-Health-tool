@@ -3,6 +3,16 @@ const connectBtn = document.getElementById('connect-btn');
 const errorSection = document.getElementById('error-section');
 const coachingResponse = document.getElementById('coaching-response');
 
+// API base URL - auto-detect or use environment variable
+const API_BASE_URL = (() => {
+  // If running on Render, use the current origin
+  if (window.location.origin.includes('onrender.com')) {
+    return window.location.origin;
+  }
+  // Otherwise, use the Render backend URL
+  return 'https://ai-health-tool-1.onrender.com';
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
 });
@@ -25,14 +35,15 @@ function setupEventListeners() {
         }
 
         submitBtn.disabled = true;
-        submitBtn.textContent = '⏳ Thinking...';
+        submitBtn.textContent = 'Thinking...';
         coachingResponse.style.display = 'none';
         errorSection.style.display = 'none';
 
         try {
-            const res = await fetch('/api/coach', {
+            const res = await fetch(`${API_BASE_URL}/api/coach`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ prompt })
             });
 
@@ -43,7 +54,13 @@ function setupEventListeners() {
                 if (res.status === 429 || errorText.includes('Too many requests')) {
                     throw new Error('Rate limited. Please wait a moment and try again.');
                 }
-                throw new Error(`Server error (${res.status})`);
+                
+                try {
+                    const errorData = JSON.parse(errorText);
+                    throw new Error(errorData.message || `Server error (${res.status})`);
+                } catch (e) {
+                    throw new Error(`Server error (${res.status}): ${errorText.substring(0, 100)}`);
+                }
             }
 
             const data = await res.json();
