@@ -371,24 +371,45 @@ app.post('/api/coach', async (req, res) => {
             // Log request details for debugging
             const requestUrl = `${LLM_API_URL}/chat/completions`;
             const tokenPreview = LLM_API_KEY.substring(0, 10) + '...' + LLM_API_KEY.substring(LLM_API_KEY.length - 5);
-            console.log('LLM Request:', { url: requestUrl, model: LLM_MODEL, tokenPreview, apiUrl: LLM_API_URL });
+            console.log('LLM Request:', { 
+              url: requestUrl, 
+              model: LLM_MODEL, 
+              tokenPreview, 
+              apiUrl: LLM_API_URL,
+              tokenLength: LLM_API_KEY.length,
+              messagesCount: messages.length
+            });
 
-            return await axios.post(
-              requestUrl,
-              {
-                model: LLM_MODEL,
-                messages,
-                temperature: 0.0,
-                max_completion_tokens: 300
-              },
-              {
-                headers: {
-                  'Authorization': `Bearer ${LLM_API_KEY}`,
-                  'Content-Type': 'application/json',
-                  'User-Agent': 'ai-health-tool'
+            try {
+              const response = await axios.post(
+                requestUrl,
+                {
+                  model: LLM_MODEL,
+                  messages,
+                  temperature: 0.0,
+                  max_completion_tokens: 300
+                },
+                {
+                  headers: {
+                    'Authorization': `Bearer ${LLM_API_KEY}`,
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'ai-health-tool'
+                  },
+                  timeout: 30000
                 }
-              }
-            );
+              );
+              console.log('LLM Response received:', { status: response.status, dataLength: JSON.stringify(response.data).length });
+              return response;
+            } catch (axiosErr) {
+              console.error('Axios error details:', {
+                message: axiosErr.message,
+                status: axiosErr.response?.status,
+                statusText: axiosErr.response?.statusText,
+                data: axiosErr.response?.data,
+                code: axiosErr.code
+              });
+              throw axiosErr;
+            }
           });
         });
         break; // Success, exit retry loop
@@ -702,7 +723,16 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Fitbit OAuth redirect: ${FITBIT_REDIRECT_URI}`);
   console.log(`LLM API URL: ${LLM_API_URL}`);
+  console.log(`LLM Model: ${LLM_MODEL}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  const tokenConfigured = Boolean(LLM_API_KEY);
   const llmConfigured = Boolean(LLM_API_URL && LLM_MODEL && LLM_API_KEY);
-  console.log(`LLM configured: ${llmConfigured ? 'yes' : 'no'} (model: ${LLM_MODEL})`);
+  
+  console.log(`GitHub token configured: ${tokenConfigured}`);
+  console.log(`LLM ready: ${llmConfigured ? 'yes' : 'no'}`);
+  
+  if (!tokenConfigured) {
+    console.warn('WARNING: GITHUB_TOKEN not set. LLM will fail to respond.');
+  }
 });
