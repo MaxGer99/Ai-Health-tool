@@ -26,12 +26,17 @@ app.use(cors({
     if (origin.startsWith('https://maxger99.github.io')) return callback(null, true);
     // Allow configured origins
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(null, true); // Temporarily allow all for debugging
+    // Allow all for debugging (can be restricted later)
+    return callback(null, true);
   },
   credentials: true,
-  methods: ['GET','POST','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization']
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
+  maxAge: 86400 // Cache preflight for 24 hours
 }));
+
+// Explicit preflight handling for OPTIONS requests
+app.options('*', cors());
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static('public'));
 app.use(session({
@@ -591,12 +596,24 @@ app.post('/api/auth/logout', (req, res) => {
 
 // Health check endpoint for monitoring
 app.get('/health', (req, res) => {
-  res.json({ 
+  res.status(200).json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV,
     hasGithubToken: Boolean(process.env.GITHUB_TOKEN),
     llmConfigured: Boolean(LLM_API_URL && LLM_MODEL && LLM_API_KEY)
+  });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Fitbit Health Coach API', 
+    status: 'running',
+    endpoints: {
+      health: '/health',
+      api: '/api/*'
+    }
   });
 });
 
