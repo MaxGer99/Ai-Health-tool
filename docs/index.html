@@ -10,10 +10,56 @@
         .container { max-width: 900px; margin: 0 auto; }
         header { text-align: center; color: white; margin-bottom: 30px; padding: 20px; }
         header h1 { font-size: 2.4rem; margin-bottom: 10px; }
-        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn { padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
-        .btn-primary { background: linear-gradient(135deg, #00b0b9, #4cc9f0); color: white; }
-        .btn-secondary { background: #6c757d; color: white; }
+        .badge {
+          display: inline-block;
+          background: linear-gradient(90deg, #00b0b9 60%, #4cc9f0 100%);
+          color: white;
+          font-size: 0.95rem;
+          font-weight: 700;
+          border-radius: 6px;
+          padding: 4px 12px;
+          margin-left: 10px;
+          letter-spacing: 0.04em;
+          box-shadow: 0 2px 8px rgba(0,176,185,0.10);
+          vertical-align: middle;
+          animation: badgePop 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+        }
+        @keyframes badgePop {
+          0% { transform: scale(0.7); opacity: 0; }
+          60% { transform: scale(1.15); opacity: 1; }
+          100% { transform: scale(1); }
+        }
+        .card {
+          transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .card:hover {
+          box-shadow: 0 8px 24px rgba(0,176,185,0.13), 0 1.5px 4px rgba(76,201,240,0.08);
+          transform: translateY(-2px) scale(1.012);
+        }
+        .btn:focus, textarea:focus {
+          outline: 2px solid #00b0b9;
+          outline-offset: 2px;
+          box-shadow: 0 0 0 2px #4cc9f0;
+        }
+        .btn[disabled] {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+        .loader {
+          display: inline-block;
+          width: 22px;
+          height: 22px;
+          border: 3px solid #e0e0e0;
+          border-top: 3px solid #00b0b9;
+          border-radius: 50%;
+          animation: spin 0.7s linear infinite;
+          margin-left: 10px;
+          vertical-align: middle;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
         textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e0e0e0; font-size: 1rem; resize: vertical; }
         .message-header { color: #2a9d8f; margin-bottom: 10px; font-size: 0.95rem; }
         .coaching-message { margin-top: 16px; padding: 16px; background: #fff; border-radius: 8px; border-left: 4px solid #2a9d8f; }
@@ -418,8 +464,8 @@
     <div class="container" style="display: flex; gap: 32px; align-items: flex-start;">
         <div style="flex: 1; min-width: 320px;">
             <header>
-                <h1>AI Health Coach</h1>
-                <p>Welcome! Connect Fitbit and chat with the coach.</p>
+                <h1>AI Health Coach <span class="badge">ReactBits Style</span></h1>
+                <p class="subtitle">Welcome! Connect Fitbit and chat with the coach.</p>
             </header>
 
             <div class="card" id="auth-section">
