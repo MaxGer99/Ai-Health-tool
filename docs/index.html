@@ -11,17 +11,102 @@
           background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
           background-size: 200% 200%;
           animation: gradientMove 12s ease-in-out infinite;
+          margin: 0;
+          padding: 0;
         }
-        @keyframes gradientMove {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
+        .container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 32px 16px 48px 16px;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;  color: #1a1a2e; }
-        .container { max-width: 900px; margin: 0 auto; }
-        header { text-align: center; color: white; margin-bottom: 30px; padding: 20px; }
-        header h1 { font-size: 2.4rem; margin-bottom: 10px; }
+        .main-flex {
+          display: flex;
+          gap: 40px;
+          align-items: flex-start;
+          justify-content: center;
+        }
+        .main-col {
+          flex: 2 1 380px;
+          min-width: 340px;
+          max-width: 520px;
+        }
+        aside, #history-section {
+          flex: 1 1 320px;
+          min-width: 260px;
+          max-width: 400px;
+        }
+        #history-section, aside .card {
+          background: rgba(255,255,255,0.92);
+          border-radius: 18px;
+          box-shadow: 0 4px 24px 0 rgba(76,201,240,0.10), 0 1.5px 4px rgba(76,201,240,0.08);
+          border: 1.5px solid rgba(120,120,180,0.10);
+          margin-bottom: 32px;
+          padding: 28px 24px 24px 24px;
+        }
+        #history-section h3 {
+          margin-top: 0;
+          margin-bottom: 18px;
+        }
+        .card, .coaching-message, #fitbit-preview, textarea {
+          background: rgba(255,255,255,0.82);
+          backdrop-filter: blur(8px) saturate(1.2);
+          -webkit-backdrop-filter: blur(8px) saturate(1.2);
+          border-radius: 16px;
+          box-shadow: 0 6px 24px 0 rgba(76,201,240,0.10), 0 1.5px 4px rgba(76,201,240,0.08);
+          margin-bottom: 32px;
+        }
+        .card {
+          border: 1.5px solid rgba(120,120,180,0.08);
+          padding: 32px 28px;
+        }
+        header {
+          text-align: center;
+          color: white;
+          margin-bottom: 40px;
+          padding: 32px 0 24px 0;
+          box-shadow: 0 8px 32px 0 rgba(76,201,240,0.10);
+        }
+        header h1 {
+          font-size: 2.8rem;
+          margin-bottom: 12px;
+          letter-spacing: 0.01em;
+        }
+        .subtitle {
+          font-size: 1.2rem;
+          margin-bottom: 0;
+        }
+        .btn, .btn-primary, .btn-secondary {
+          background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+          color: #1a1a2e;
+          border: none;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 1.18rem;
+          padding: 18px 36px;
+          min-width: 120px;
+          min-height: 48px;
+          box-shadow: 0 2px 8px rgba(67,233,123,0.08);
+          transition: box-shadow 0.2s, transform 0.2s;
+          margin-right: 10px;
+        }
+        .btn:last-child { margin-right: 0; }
+        .btn:hover, .btn:focus {
+          box-shadow: 0 6px 18px rgba(67,233,123,0.18);
+          transform: translateY(-2px) scale(1.03);
+        }
+        textarea {
+          color: #222;
+          font-size: 1.08rem;
+          border: 1.5px solid #b2c2e0;
+          margin-top: 8px;
+          margin-bottom: 8px;
+          box-shadow: 0 2px 8px rgba(120,120,180,0.04);
+          padding: 16px 14px;
+        }
+        textarea:focus {
+          border-color: #4cc9f0;
+          background: rgba(255,255,255,0.95);
+        }
         .badge {
           display: inline-block;
           background: linear-gradient(90deg, #00b0b9 60%, #4cc9f0 100%);
@@ -41,56 +126,6 @@
           60% { transform: scale(1.15); opacity: 1; }
           100% { transform: scale(1); }
         }
-        .card, .coaching-message, #fitbit-preview, textarea {
-          background: rgba(255,255,255,0.82);
-          backdrop-filter: blur(8px) saturate(1.2);
-          -webkit-backdrop-filter: blur(8px) saturate(1.2);
-          border-radius: 16px;
-          box-shadow: 0 6px 24px 0 rgba(76,201,240,0.10), 0 1.5px 4px rgba(76,201,240,0.08);
-        }
-        .card {
-          border: 1.5px solid rgba(120,120,180,0.08);
-          padding: 32px 28px;
-        }
-        textarea {
-          color: #222;
-          font-size: 1.08rem;
-          border: 1.5px solid #b2c2e0;
-          margin-top: 8px;
-          margin-bottom: 8px;
-          box-shadow: 0 2px 8px rgba(120,120,180,0.04);
-        }
-        textarea:focus {
-          border-color: #4cc9f0;
-          background: rgba(255,255,255,0.95);
-        }
-        .btn, .btn-primary, .btn-secondary {
-          background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
-          color: #1a1a2e;
-          border: none;
-          border-radius: 12px;
-          font-weight: 700;
-          font-size: 1.18rem;
-          padding: 18px 36px;
-          min-width: 120px;
-          min-height: 48px;
-          box-shadow: 0 2px 8px rgba(67,233,123,0.08);
-          transition: box-shadow 0.2s, transform 0.2s;
-        }
-        .btn:hover, .btn:focus {
-          box-shadow: 0 6px 18px rgba(67,233,123,0.18);
-          transform: translateY(-2px) scale(1.03);
-        }
-        header h1, .card h2, .card h3 {
-          color: #3a3a6a;
-        }
-        .subtitle, .card p, .card li, .coaching-message, #fitbit-preview {
-          color: #222;
-        }
-        .main-flex {
-          background: none;
-        }
-        /* Keep loader styles as before */
         .loader {
           display: inline-block;
           width: 22px;
@@ -106,47 +141,19 @@
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
-        textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e0e0e0; font-size: 1rem; resize: vertical; }
-        .message-header { color: #2a9d8f; margin-bottom: 10px; font-size: 0.95rem; }
-        .coaching-message { margin-top: 16px; padding: 16px; background: #fff; border-radius: 8px; border-left: 4px solid #2a9d8f; }
-        .error-card { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 16px; border-radius: 8px; margin-top: 16px; }
-        footer { text-align: center; color: white; margin-top: 24px; opacity: 0.85; }
-        .main-flex {
-          display: flex;
-          gap: 32px;
-          align-items: flex-start;
-          justify-content: center;
-        }
-        .main-col {
-          flex: 2 1 340px;
-          min-width: 320px;
-        }
-        aside, #history-section {
-          flex: 1 1 320px;
-          min-width: 260px;
-          max-width: 400px;
-        }
-        #history-section {
-          background: #f4f6f9;
-          color: #222;
-        }
-        @media (max-width: 900px) {
-          .main-flex { flex-direction: column; gap: 0; }
-          aside, #history-section { max-width: 100%; min-width: 0; }
-        }
-        .card h2, .card h3 { color: #764ba2; margin-bottom: 10px; }
-        .card ul { margin: 10px 0 0 18px; }
-        .card li { margin-bottom: 4px; }
-        .card em { color: #555; }
-        /* Dark mode styles */
+        /* Dark mode styles - now covers all cards/sections */
         body.dark {
           background: linear-gradient(120deg, #232946 0%, #16161a 100%);
           color: #f4f4f4;
         }
-        body.dark .card, body.dark .coaching-message, body.dark #fitbit-preview, body.dark textarea {
-          background: rgba(30,34,54,0.92);
-          color: #f4f4f4;
+        body.dark .container, body.dark .main-flex {
+          background: none;
+        }
+        body.dark .card, body.dark .coaching-message, body.dark #fitbit-preview, body.dark textarea, body.dark aside .card, body.dark #history-section {
+          background: rgba(30,34,54,0.96) !important;
+          color: #f4f4f4 !important;
           border: 1.5px solid #232946;
+          box-shadow: 0 4px 24px 0 rgba(76,201,240,0.18), 0 1.5px 4px rgba(76,201,240,0.12);
         }
         body.dark .btn, body.dark .btn-primary, body.dark .btn-secondary {
           background: linear-gradient(90deg, #232946 0%, #4cc9f0 100%);
@@ -155,8 +162,8 @@
         body.dark header h1, body.dark .card h2, body.dark .card h3 {
           color: #a1c4fd;
         }
-        body.dark .subtitle, body.dark .card p, body.dark .card li, body.dark .coaching-message, body.dark #fitbit-preview {
-          color: #e0e0e0;
+        body.dark .subtitle, body.dark .card p, body.dark .card li, body.dark .coaching-message, body.dark #fitbit-preview, body.dark aside .card, body.dark #history-section {
+          color: #e0e0e0 !important;
         }
         body.dark .badge {
           background: linear-gradient(90deg, #4cc9f0 60%, #232946 100%);
@@ -165,6 +172,10 @@
         body.dark .error-card {
           background: #2d1e2f;
           color: #ffb4b4;
+        }
+        @media (max-width: 900px) {
+          .main-flex { flex-direction: column; gap: 0; }
+          aside, #history-section, .main-col { max-width: 100%; min-width: 0; }
         }
     </style>
     <script>
@@ -604,97 +615,42 @@
     </script>
 </head>
 <body>
-    <div class="container">
-      <div class="main-flex">
-        <div class="main-col">
-            <header>
-                <h1>AI Health Coach <span class="badge">ReactBits Style</span></h1>
-                <p class="subtitle">Welcome! Connect Fitbit and chat with the coach.</p>
-            </header>
-
-            <div class="card" id="auth-section">
-                <h2>Connect Your Fitbit</h2>
-                <p>Authorize via our hosted app or upload exported JSON for targeted coaching.</p>
-                                <div style="display:flex; gap:12px; flex-wrap:wrap;">
-                    <button id="connect-btn" class="btn btn-primary">Connect with Fitbit</button>
-                                        <button id="upload-fitbit" class="btn btn-secondary">Upload Fitbit Data</button>
-                    <input type="file" id="fitbit-file" accept="application/json" style="display:none;" />
-                </div>
-                <div id="fitbit-preview" style="display:none; margin-top:14px; background:#f4f6f9; border:1px solid #e0e0e0; padding:12px; border-radius:8px;">
-                   <strong style="display:block; margin-bottom:6px;">Uploaded Data Summary:</strong>
-                   <div id="fitbit-summary" style="font-size:0.85rem; white-space:pre-wrap;"></div>
-                </div>
-            </div>
-
-                        <!-- Modal for data selection -->
-                        <div id="fitbit-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); align-items:center; justify-content:center; z-index:1000;">
-                            <div style="background:#fff; width:min(520px, 92vw); border-radius:12px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
-                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-                                    <h3 style="margin:0; color:#333;">Fitbit Data Options</h3>
-                                    <button id="fitbit-modal-close" class="btn" style="background:#e9ecef; color:#333;">Close</button>
-                                </div>
-                                <p style="color:#555; margin-bottom:14px;">Choose how to provide data for better, personalized coaching.</p>
-                                <div style="display:flex; flex-wrap:wrap; gap:10px;">
-                                    <button id="fitbit-modal-upload" class="btn btn-secondary">Upload JSON File</button>
-                                    <button id="fitbit-modal-generate-day" class="btn btn-secondary">Generate 1 Day</button>
-                                    <button id="fitbit-modal-generate-week" class="btn btn-secondary">Generate 7 Days</button>
-                                    <button id="fitbit-modal-load-sample" class="btn btn-secondary">Load Sample</button>
-                                </div>
-                            </div>
-                        </div>
-
-            <div class="card" id="llm-section">
-                <h2>Ask the Coach</h2>
-                <p>Type a prompt for the coach. Example: "Create a weekly workout plan"</p>
-                <div id="config-warning" style="display:none; background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 12px; border-radius: 6px; margin-bottom: 12px; font-size: 0.9em;">
-                    <strong>Configuration issue:</strong> <span id="config-message"></span>
-                </div>
-                <textarea id="prompt-input" rows="4" placeholder="Enter your prompt..."></textarea>
-                <div style="margin-top:12px;">
-                    <button id="submit-prompt" class="btn btn-secondary">Send Prompt</button>
-                    <button id="check-config" class="btn" style="background: #6c757d; color: white; margin-left: 8px;">Check Config</button>
-                    <span id="config-status" style="margin-left: 10px; font-size: 0.9em; color: #555;"></span>
-                </div>
-                <div id="data-usage" style="display:none; margin-top:10px; font-size:0.9em; color:#2a9d8f; background:#e8f6f3; border:1px solid #bde5dc; padding:8px 10px; border-radius:6px;"></div>
-                <div id="coaching-response" style="display:none; margin-top:16px;">
-                    <div class="coaching-message">
-                        <div class="message-header"><strong>Your Coach Says:</strong></div>
-                        <div id="coaching-data-usage" style="display:none; margin:-4px 0 8px; font-size:0.85em; color:#2a6f6b; background:#e8f6f3; border:1px solid #bde5dc; padding:6px 8px; border-radius:6px;"></div>
-                        <p id="coaching-text"></p>
-                        <div id="day-cards" style="display:none; flex-wrap:wrap; gap:12px; margin-top:12px;"></div>
-                    </div>
-                </div>
-                <div id="error-section" class="error-card" style="display:none;">
-                    <h3>Error</h3>
-                    <p id="error-message"></p>
-                </div>
-                <div id="history" class="card" style="display:none; margin-top:18px;">
-                  <h3 style="margin-bottom:12px;">Recent Responses</h3>
-                  <div id="history-items" style="display:flex; flex-direction:column; gap:10px;"></div>
-                </div>
-            </div>
-
-            <footer>
-                <p>Built with ❤️ for health and wellness</p>
-            </footer>
+  <div class="container">
+    <header>
+      <h1>AI Health Coach <span class="badge">Beta</span></h1>
+      <div class="subtitle">Personalized wellness guidance powered by AI</div>
+      <button id="darkModeToggle" class="btn" style="margin-top: 18px;">Toggle Dark Mode</button>
+    </header>
+    <div class="main-flex">
+      <div class="main-col">
+        <div class="card">
+          <h2>About This App</h2>
+          <p>This AI Health Coach provides personalized wellness advice based on your input and fitness data. All data is processed securely in your browser. <br><br> Try asking for a daily health tip, nutrition advice, or a workout plan!</p>
         </div>
-        <aside>
-          <div class="card" style="background: #f8f9fa;">
-            <h2>About This App</h2>
-            <p><strong>AI Health Coach</strong> is a modern web application that combines your Fitbit health data with the power of AI to deliver personalized, actionable health coaching. After connecting your Fitbit account, the app securely syncs your latest activity, heart rate, and sleep data. You can then interact with an AI coach by entering any health-related prompt—such as asking for a workout plan, nutrition advice, or motivation.
-            </p>
-            <p>The AI analyzes your real Fitbit data and responds with tailored feedback, encouragement, and recommendations. Whether you want to improve your fitness, sleep better, or simply stay motivated, this tool provides instant, expert guidance. All data is processed securely, and you can use the app from any device.</p>
-            <ul>
-              <li>Connects to Fitbit for real-time health data</li>
-              <li>Uses advanced AI models for coaching</li>
-              <li>Supports any health or fitness prompt</li>
-              <li>Works on desktop and mobile</li>
-            </ul>
-            <p style="margin-top: 12px; color: #555; font-size: 0.98em;"><em>Your privacy is important: your Fitbit data is only used to generate coaching responses and is never shared.</em></p>
-          </div>
-        </aside>
-        <!-- history-section will be injected here by JS -->
+        <div class="card">
+          <h3>Get Coaching</h3>
+          <form id="coach-form">
+            <textarea id="user-input" rows="4" placeholder="How can I help you today?"></textarea>
+            <div style="margin-top: 18px;">
+              <button type="submit" class="btn btn-primary">Ask Coach</button>
+              <button type="button" class="btn btn-secondary" id="clear-btn">Clear</button>
+            </div>
+          </form>
+        </div>
+        <div id="fitbit-preview" class="card" style="display:none;"></div>
+        <div id="response" class="coaching-message"></div>
       </div>
+      <aside>
+        <div id="history-section" class="card">
+          <h3>Recent Coaching History</h3>
+          <ul id="history-list" style="padding-left: 1.2em; margin: 0;"></ul>
+        </div>
+        <div class="card error-card" id="error-message" style="display:none;"></div>
+      </aside>
     </div>
+  </div>
+  <script>
+    // ...existing code...
+  </script>
 </body>
 </html>
