@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AI Health Coach</title>
     <style>
-        /* TEST: If you see a red border, CSS is working! */
-        body { border: 5px solid red !important; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 24px; color: #1a1a2e; }
         .container { max-width: 900px; margin: 0 auto; }
@@ -67,6 +65,33 @@
         .coaching-message { margin-top: 16px; padding: 16px; background: #fff; border-radius: 8px; border-left: 4px solid #2a9d8f; }
         .error-card { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 16px; border-radius: 8px; margin-top: 16px; }
         footer { text-align: center; color: white; margin-top: 24px; opacity: 0.85; }
+        .main-flex {
+          display: flex;
+          gap: 32px;
+          align-items: flex-start;
+          justify-content: center;
+        }
+        .main-col {
+          flex: 2 1 340px;
+          min-width: 320px;
+        }
+        aside, #history-section {
+          flex: 1 1 320px;
+          min-width: 260px;
+          max-width: 400px;
+        }
+        #history-section {
+          background: #f4f6f9;
+          color: #222;
+        }
+        @media (max-width: 900px) {
+          .main-flex { flex-direction: column; gap: 0; }
+          aside, #history-section { max-width: 100%; min-width: 0; }
+        }
+        .card h2, .card h3 { color: #764ba2; margin-bottom: 10px; }
+        .card ul { margin: 10px 0 0 18px; }
+        .card li { margin-bottom: 4px; }
+        .card em { color: #555; }
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -487,8 +512,9 @@
     </script>
 </head>
 <body>
-    <div class="container" style="display: flex; gap: 32px; align-items: flex-start;">
-        <div style="flex: 1; min-width: 320px;">
+    <div class="container">
+      <div class="main-flex">
+        <div class="main-col">
             <header>
                 <h1>AI Health Coach <span class="badge">ReactBits Style</span></h1>
                 <p class="subtitle">Welcome! Connect Fitbit and chat with the coach.</p>
@@ -560,26 +586,23 @@
                 <p>Built with ❤️ for health and wellness</p>
             </footer>
         </div>
-        <aside style="flex: 1; min-width: 280px; max-width: 400px;">
-            <div class="card" style="background: #f8f9fa;">
-                <h2 style="color: #764ba2;">About This App</h2>
-                <p>
-                    <strong>AI Health Coach</strong> is a modern web application that combines your Fitbit health data with the power of AI to deliver personalized, actionable health coaching. After connecting your Fitbit account, the app securely syncs your latest activity, heart rate, and sleep data. You can then interact with an AI coach by entering any health-related prompt—such as asking for a workout plan, nutrition advice, or motivation.
-                </p>
-                <p>
-                    The AI analyzes your real Fitbit data and responds with tailored feedback, encouragement, and recommendations. Whether you want to improve your fitness, sleep better, or simply stay motivated, this tool provides instant, expert guidance. All data is processed securely, and you can use the app from any device.
-                </p>
-                <ul>
-                    <li>Connects to Fitbit for real-time health data</li>
-                    <li>Uses advanced AI models for coaching</li>
-                    <li>Supports any health or fitness prompt</li>
-                    <li>Works on desktop and mobile</li>
-                </ul>
-                <p style="margin-top: 12px; color: #555; font-size: 0.98em;">
-                    <em>Your privacy is important: your Fitbit data is only used to generate coaching responses and is never shared.</em>
-                </p>
-            </div>
+        <aside>
+          <div class="card" style="background: #f8f9fa;">
+            <h2>About This App</h2>
+            <p><strong>AI Health Coach</strong> is a modern web application that combines your Fitbit health data with the power of AI to deliver personalized, actionable health coaching. After connecting your Fitbit account, the app securely syncs your latest activity, heart rate, and sleep data. You can then interact with an AI coach by entering any health-related prompt—such as asking for a workout plan, nutrition advice, or motivation.
+            </p>
+            <p>The AI analyzes your real Fitbit data and responds with tailored feedback, encouragement, and recommendations. Whether you want to improve your fitness, sleep better, or simply stay motivated, this tool provides instant, expert guidance. All data is processed securely, and you can use the app from any device.</p>
+            <ul>
+              <li>Connects to Fitbit for real-time health data</li>
+              <li>Uses advanced AI models for coaching</li>
+              <li>Supports any health or fitness prompt</li>
+              <li>Works on desktop and mobile</li>
+            </ul>
+            <p style="margin-top: 12px; color: #555; font-size: 0.98em;"><em>Your privacy is important: your Fitbit data is only used to generate coaching responses and is never shared.</em></p>
+          </div>
         </aside>
+        <!-- history-section will be injected here by JS -->
+      </div>
     </div>
 </body>
 </html>
