@@ -285,10 +285,14 @@
               if (summary && summary !== 'No data loaded.' && summary !== 'Failed to parse summary.') {
                 fitbitSummary.textContent = summary;
                 fitbitSummary.style.display = 'block';
-                fitbitPreview.style.display = 'block';
               } else {
                 fitbitSummary.textContent = '';
                 fitbitSummary.style.display = 'none';
+              }
+              // Only show fitbitPreview if it has content
+              if (fitbitPreview && fitbitPreview.innerHTML.trim() !== '') {
+                fitbitPreview.style.display = 'block';
+              } else {
                 fitbitPreview.style.display = 'none';
               }
               const synopsis = buildUsageSynopsis(json);
@@ -550,52 +554,53 @@
             }
 
             submitBtn.addEventListener('click', async () => {
-                const prompt = (promptInput.value || '').trim();
-                if (!prompt && !uploadedFitbitData) {
-                    showError('Enter a prompt or upload Fitbit data.');
-                    return;
+              const prompt = (promptInput.value || '').trim();
+              if (!prompt && !uploadedFitbitData) {
+                showError('Enter a prompt or upload Fitbit data.');
+                return;
+              }
+
+              submitBtn.disabled = true;
+              submitBtn.textContent = 'Thinking...';
+              coachingResponse.style.display = 'none';
+              errorSection.style.display = 'none';
+
+              try {
+                const body = { prompt };
+                if (uploadedFitbitData) body.fitbitData = uploadedFitbitData;
+                    
+                const res = await fetch(`https://ai-health-tool-1.onrender.com/api/coach`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
+                  body: JSON.stringify(body)
+                });
+
+                if (!res.ok) {
+                  const errorText = await res.text().catch(() => 'Unknown error');
+                  if (res.status === 429) throw new Error('Rate limited. Wait and retry.');
+                  try {
+                    const errorData = JSON.parse(errorText);
+                    throw new Error(errorData.message || `Server error (${res.status})`);
+                  } catch {
+                    throw new Error(`Server error (${res.status})`);
+                  }
                 }
 
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'Thinking...';
-                coachingResponse.style.display = 'none';
-                errorSection.style.display = 'none';
-
-                try {
-                    const body = { prompt };
-                    if (uploadedFitbitData) body.fitbitData = uploadedFitbitData;
-                    
-                    const res = await fetch(`https://ai-health-tool-1.onrender.com/api/coach`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify(body)
-                    });
-
-                    if (!res.ok) {
-                        const errorText = await res.text().catch(() => 'Unknown error');
-                        if (res.status === 429) throw new Error('Rate limited. Wait and retry.');
-                        try {
-                            const errorData = JSON.parse(errorText);
-                            throw new Error(errorData.message || `Server error (${res.status})`);
-                        } catch {
-                            throw new Error(`Server error (${res.status})`);
-                        }
-                    }
-
-                    const data = await res.json();
-                    if (data.error) throw new Error(data.error);
-                    
-                    coachingText.textContent = data.message || 'No response.';
-                    coachingResponse.style.display = 'block';
-                    renderDayCards(data.message || '');
-                    loadHistory();
-                } catch (err) {
-                    showError(err.message || 'Network error');
-                } finally {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Send Prompt';
-                }
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                // Ensure coaching response is styled and visible
+                coachingResponse.className = 'coaching-message card';
+                coachingResponse.innerHTML = data.message ? data.message.replace(/\n/g, '<br>') : 'No response.';
+                coachingResponse.style.display = 'block';
+                renderDayCards(data.message || '');
+                loadHistory();
+              } catch (err) {
+                showError(err.message || 'Network error');
+              } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Prompt';
+              }
             });
 
             function showError(msg) {
