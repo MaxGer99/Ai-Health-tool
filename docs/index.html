@@ -623,6 +623,10 @@
     </header>
     <div class="main-flex">
       <div class="main-col">
+        <div id="config-warning" class="card" style="display:none; background:#fffbe6; color:#b8860b; border:1.5px solid #ffe58f; margin-bottom:24px;">
+          <span id="config-message">Backend status unknown.</span>
+          <button id="check-config" class="btn btn-secondary" style="margin-left:18px; min-width:90px; padding:8px 18px; font-size:0.98em;">Retry</button>
+        </div>
         <div class="card">
           <h2>About This App</h2>
           <p>This AI Health Coach provides personalized wellness advice based on your input and fitness data. All data is processed securely in your browser. <br><br> Try asking for a daily health tip, nutrition advice, or a workout plan!</p>
@@ -651,6 +655,21 @@
   </div>
   <script>
     // ...existing code...
+    // Defensive event listener attachment for optional elements
+    document.addEventListener('DOMContentLoaded', () => {
+      const checkConfigBtn = document.getElementById('check-config');
+      if (checkConfigBtn) checkConfigBtn.addEventListener('click', () => {
+        if (typeof checkConfig === 'function') checkConfig();
+      });
+      const connectBtn = document.getElementById('connect-btn');
+      if (connectBtn) connectBtn.addEventListener('click', () => {
+        window.location.href = `${API_BASE_URL}/auth/fitbit`;
+      });
+      const uploadBtn = document.getElementById('upload-fitbit');
+      if (uploadBtn) uploadBtn.addEventListener('click', () => {
+        if (typeof openModal === 'function') openModal();
+      });
+    });
   </script>
 </body>
 </html>
