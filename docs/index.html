@@ -400,6 +400,30 @@
                 dayCardsEl.style.display = 'flex';
             }
 
+            function renderHistory(historyArr) {
+                // Find or create a history section
+                let hist = document.getElementById('history-section');
+                if (!hist) {
+                    hist = document.createElement('div');
+                    hist.id = 'history-section';
+                    hist.className = 'card';
+                    hist.style.marginTop = '18px';
+                    document.querySelector('.container').appendChild(hist);
+                }
+                if (!Array.isArray(historyArr) || !historyArr.length) {
+                    hist.innerHTML = '<div style="color:#888">No history yet.</div>';
+                    return;
+                }
+                hist.innerHTML = '<h3 style="margin-bottom:10px;">Recent Coaching History</h3>' +
+                    historyArr.slice(0, 10).map(item =>
+                        `<div style="margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid #eee;">
+                            <div style="font-size:0.95em;color:#555;"><b>Prompt:</b> ${item.prompt || ''}</div>
+                            <div style="font-size:0.95em;color:#2a9d8f;"><b>Message:</b> ${item.message || ''}</div>
+                            <div style="font-size:0.85em;color:#888;">${item.timestamp ? new Date(item.timestamp).toLocaleString() : ''}</div>
+                        </div>`
+                    ).join('');
+            }
+
             submitBtn.addEventListener('click', async () => {
                 const prompt = (promptInput.value || '').trim();
                 if (!prompt && !uploadedFitbitData) {
