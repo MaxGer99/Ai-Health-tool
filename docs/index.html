@@ -5,8 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AI Health Coach</title>
     <style>
+        /* ReactBits-inspired animated gradient background */
+        body {
+          min-height: 100vh;
+          background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
+          background-size: 200% 200%;
+          animation: gradientMove 12s ease-in-out infinite;
+        }
+        @keyframes gradientMove {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 24px; color: #1a1a2e; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;  color: #1a1a2e; }
         .container { max-width: 900px; margin: 0 auto; }
         header { text-align: center; color: white; margin-bottom: 30px; padding: 20px; }
         header h1 { font-size: 2.4rem; margin-bottom: 10px; }
@@ -29,22 +41,52 @@
           60% { transform: scale(1.15); opacity: 1; }
           100% { transform: scale(1); }
         }
+        .card, .coaching-message, #fitbit-preview, textarea {
+          background: rgba(255,255,255,0.82);
+          backdrop-filter: blur(8px) saturate(1.2);
+          -webkit-backdrop-filter: blur(8px) saturate(1.2);
+          border-radius: 16px;
+          box-shadow: 0 6px 24px 0 rgba(76,201,240,0.10), 0 1.5px 4px rgba(76,201,240,0.08);
+        }
         .card {
+          border: 1.5px solid rgba(120,120,180,0.08);
+          padding: 32px 28px;
+        }
+        textarea {
+          color: #222;
+          font-size: 1.08rem;
+          border: 1.5px solid #b2c2e0;
+          margin-top: 8px;
+          margin-bottom: 8px;
+          box-shadow: 0 2px 8px rgba(120,120,180,0.04);
+        }
+        textarea:focus {
+          border-color: #4cc9f0;
+          background: rgba(255,255,255,0.95);
+        }
+        .btn, .btn-primary, .btn-secondary {
+          background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+          color: #1a1a2e;
+          border: none;
+          border-radius: 8px;
+          font-weight: 600;
+          box-shadow: 0 2px 8px rgba(67,233,123,0.08);
           transition: box-shadow 0.2s, transform 0.2s;
         }
-        .card:hover {
-          box-shadow: 0 8px 24px rgba(0,176,185,0.13), 0 1.5px 4px rgba(76,201,240,0.08);
-          transform: translateY(-2px) scale(1.012);
+        .btn:hover, .btn:focus {
+          box-shadow: 0 6px 18px rgba(67,233,123,0.18);
+          transform: translateY(-2px) scale(1.03);
         }
-        .btn:focus, textarea:focus {
-          outline: 2px solid #00b0b9;
-          outline-offset: 2px;
-          box-shadow: 0 0 0 2px #4cc9f0;
+        header h1, .card h2, .card h3 {
+          color: #3a3a6a;
         }
-        .btn[disabled] {
-          opacity: 0.7;
-          cursor: not-allowed;
+        .subtitle, .card p, .card li, .coaching-message, #fitbit-preview {
+          color: #222;
         }
+        .main-flex {
+          background: none;
+        }
+        /* Keep loader styles as before */
         .loader {
           display: inline-block;
           width: 22px;
