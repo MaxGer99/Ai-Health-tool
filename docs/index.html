@@ -280,18 +280,29 @@
             });
 
             function handleDataSelection(json, successMsg) {
-                uploadedFitbitData = json;
-                const summary = buildFitbitSummary(json);
+              uploadedFitbitData = json;
+              const summary = buildFitbitSummary(json);
+              if (summary && summary !== 'No data loaded.' && summary !== 'Failed to parse summary.') {
                 fitbitSummary.textContent = summary;
+                fitbitSummary.style.display = 'block';
                 fitbitPreview.style.display = 'block';
-                const synopsis = buildUsageSynopsis(json);
-                const usage = document.getElementById('data-usage');
-                if (usage) {
-                    usage.textContent = synopsis;
-                    usage.style.display = synopsis ? 'block' : 'none';
-                }
-                closeModal();
-                if (successMsg) showError(successMsg);
+              } else {
+                fitbitSummary.textContent = '';
+                fitbitSummary.style.display = 'none';
+                fitbitPreview.style.display = 'none';
+              }
+              const synopsis = buildUsageSynopsis(json);
+              const usage = document.getElementById('data-usage');
+              if (usage) {
+                usage.textContent = synopsis;
+                usage.style.display = synopsis ? 'block' : 'none';
+              }
+              closeModal();
+              // Show a visual confirmation for dummy/sample data
+              if (successMsg) {
+                fitbitSummary.textContent += `\n${successMsg}`;
+                fitbitSummary.style.display = 'block';
+              }
             }
 
             if (fitbitFileInput) {
