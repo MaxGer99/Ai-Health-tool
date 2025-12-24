@@ -640,6 +640,13 @@
               <button type="button" class="btn btn-secondary" id="clear-btn">Clear</button>
             </div>
           </form>
+          <div style="margin-top: 22px; margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+            <button type="button" class="btn btn-secondary" id="connect-btn">Connect Fitbit</button>
+            <button type="button" class="btn btn-secondary" id="upload-fitbit">Upload Fitbit JSON</button>
+            <button type="button" class="btn btn-secondary" id="fitbit-modal-generate-day">Dummy 1-Day</button>
+            <button type="button" class="btn btn-secondary" id="fitbit-modal-generate-week">Dummy 7-Day</button>
+            <button type="button" class="btn btn-secondary" id="fitbit-modal-load-sample">Sample Data</button>
+          </div>
         </div>
         <div id="fitbit-preview" class="card" style="display:none;"></div>
         <div id="response" class="coaching-message"></div>
@@ -663,7 +670,9 @@
       });
       const connectBtn = document.getElementById('connect-btn');
       if (connectBtn) connectBtn.addEventListener('click', () => {
-        window.location.href = `${API_BASE_URL}/auth/fitbit`;
+        if (typeof API_BASE_URL !== 'undefined') {
+          window.location.href = `${API_BASE_URL}/auth/fitbit`;
+        }
       });
       const uploadBtn = document.getElementById('upload-fitbit');
       if (uploadBtn) uploadBtn.addEventListener('click', () => {
