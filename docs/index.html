@@ -158,34 +158,24 @@
                     // Weekly dataset support: data.days = [ { date, activities, heart, sleep } ]
                     if (Array.isArray(data.days) && data.days.length) {
                         const days = data.days;
-                        const range = `${days[0].date} → ${days[days.length - 1].date}`;
-                        let totalSteps = 0;
-                        let totalActive = 0;
-                        let totalSleepMin = 0;
+                        let totalSteps = 0, totalActive = 0, totalSleepMin = 0;
                         let rhrSum = 0, rhrCount = 0;
                         days.forEach(d => {
                             const s = d.activities?.summary || {};
                             totalSteps += s.steps || 0;
                             totalActive += (s.fairlyActiveMinutes || 0) + (s.veryActiveMinutes || 0);
-                            const sl = d.sleep?.summary?.totalMinutesAsleep;
-                            if (typeof sl === 'number') totalSleepMin += sl;
+                            const sm = d.sleep?.summary?.totalMinutesAsleep;
+                            if (typeof sm === 'number') totalSleepMin += sm;
                             const rhr = d.heart?.['activities-heart']?.[0]?.value?.restingHeartRate;
                             if (typeof rhr === 'number') { rhrSum += rhr; rhrCount++; }
                         });
-                        const avgSteps = Math.round(totalSteps / days.length);
+                        const avgSteps = Math.round(totalSteps / days.length).toLocaleString();
                         const avgActive = Math.round(totalActive / days.length);
                         const avgSleepHrs = (totalSleepMin / days.length / 60).toFixed(1);
-                        const avgRHR = rhrCount ? Math.round(rhrSum / rhrCount) : 'n/a';
-                        const last = days[days.length - 1];
-                        const lastSum = last.activities?.summary || {};
-                        const lastSteps = lastSum.steps || 0;
-                        return (
-                            `Week: ${range}\n` +
-                            `Total Steps: ${totalSteps.toLocaleString()} • Avg/Day: ${avgSteps.toLocaleString()}\n` +
-                            `Avg Active Minutes/Day: ${avgActive}\n` +
-                            `Avg Sleep/Day: ${avgSleepHrs} h • Avg RHR: ${avgRHR}\n` +
-                            `Latest Day (${last.date}) Steps: ${lastSteps.toLocaleString()}`
-                        );
+                        const avgRHR = rhrCount ? Math.round(rhrSum / rhrCount) : null;
+                        const latest = days[days.length - 1];
+                        const latestSteps = (latest.activities?.summary?.steps || 0).toLocaleString();
+                        return `Using 7-day dataset: ${days[0].date} → ${days[days.length - 1].date} • Avg steps ${avgSteps}/day • Avg active ${avgActive}/day • Avg sleep ${avgSleepHrs}h • Today ${latestSteps} steps${avgRHR ? ` • Avg RHR ${avgRHR}` : ''}`;
                     }
 
                     // Single day fallback (accepts multiple shapes)
