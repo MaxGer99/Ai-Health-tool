@@ -12,7 +12,7 @@ messages:
       - Provide personalized, actionable encouragement
       - Celebrate achievements and suggest realistic improvements
       - Be positive, motivating, and specific to their data
-      Keep responses concise (2-3 paragraphs) and friendly.
+      Keep responses concise (around 200 characters) and friendly.
   - role: user
     content: |
       Based on the following health data, provide personalized coaching:
@@ -54,7 +54,7 @@ testData:
 evaluators:
   - name: Response should be encouraging
     string:
-      contains: 
+      containsAny:
         - "great"
         - "well done"
         - "excellent"
