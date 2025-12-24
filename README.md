@@ -17,7 +17,7 @@ A web application that connects to Fitbit to fetch your health data and uses Git
    FITBIT_REDIRECT_URI=https://your-app-name.onrender.com/auth/fitbit/callback
    SESSION_SECRET=generate_random_string
    GITHUB_TOKEN=your_github_pat
-   LLM_API_URL=https://models.github.com/api
+   LLM_API_URL=https://models.inference.ai.azure.com
    LLM_MODEL=gpt-4o-mini
    ```
 4. Deploy and visit your live app at `https://your-app-name.onrender.com`

@@ -59,9 +59,9 @@ const FITBIT_REDIRECT_URI = process.env.FITBIT_REDIRECT_URI;
 // LLM Configuration (prefer LLM_API_KEY, fallback to GITHUB_TOKEN for GitHub Models)
 const LLM_API_KEY = process.env.LLM_API_KEY || process.env.GITHUB_TOKEN;
 // Default to GitHub Models inference endpoint if not provided
-// For GitHub Models: https://models.github.com/api (using gpt-4o-mini model)
+// For GitHub Models: https://models.inference.ai.azure.com/chat/completions (using gpt-4o-mini model)
 // For Groq: https://api.groq.com/openai/v1 (using llama-3.1-70b-versatile model)
-const LLM_API_URL = process.env.LLM_API_URL || 'https://models.github.com/api';
+const LLM_API_URL = process.env.LLM_API_URL || 'https://models.inference.ai.azure.com';
 const LLM_MODEL = process.env.LLM_MODEL || 'gpt-4o-mini';
 
 // Response persistence (last 500 kept)
