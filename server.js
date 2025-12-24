@@ -62,7 +62,7 @@ const LLM_API_KEY = process.env.LLM_API_KEY || process.env.GITHUB_TOKEN;
 // For GitHub Models: https://models.inference.ai.azure.com/chat/completions (using gpt-4o-mini model)
 // For Groq: https://api.groq.com/openai/v1 (using llama-3.1-70b-versatile model)
 const LLM_API_URL = process.env.LLM_API_URL || 'https://models.inference.ai.azure.com';
-const LLM_MODEL = process.env.LLM_MODEL || 'gpt-4o-mini';
+const LLM_MODEL = process.env.LLM_MODEL || 'gpt-4o-mini'; // Ensure no 'openai/' prefix
 
 // Response persistence (last 500 kept)
 const RESPONSES_FILE = path.join(__dirname, 'responses.json');
@@ -433,9 +433,15 @@ app.post('/api/coach', async (req, res) => {
         break; // Success, exit retry loop
       } catch (apiError) {
         const status = apiError.response?.status;
-        const isRateLimit = status === 429 || (apiError.response?.data?.error && 
-          (apiError.response.data.error.includes('Too many requests') || 
-           apiError.response.data.error.includes('rate limit')));
+        let errorMsg = '';
+        if (apiError.response?.data?.error) {
+          if (typeof apiError.response.data.error === 'string') {
+            errorMsg = apiError.response.data.error;
+          } else if (typeof apiError.response.data.error.message === 'string') {
+            errorMsg = apiError.response.data.error.message;
+          }
+        }
+        const isRateLimit = status === 429 || (errorMsg && (errorMsg.includes('Too many requests') || errorMsg.includes('rate limit')));
         
         if (isRateLimit && retries > 0) {
           const baseDelay = 1000 * (2 ** (3 - retries));
