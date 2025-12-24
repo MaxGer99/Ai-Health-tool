@@ -45,23 +45,37 @@
             const configWarning = document.getElementById('config-warning');
             const configMessage = document.getElementById('config-message');
 
+            // API base URL for GitHub Pages deployment
+            const API_BASE_URL = 'https://ai-health-tool-1.onrender.com';
+
             // Check configuration on page load
             checkConfig();
             async function checkConfig() {
-                // Disable config checks from GitHub Pages due to CORS limitations
-                // Users should visit the app directly at https://ai-health-tool-1.onrender.com/
-                configWarning.style.display = 'block';
-                configMessage.textContent = 'This is a documentation page. Visit the live app at https://ai-health-tool-1.onrender.com/ to use the AI Health Coach.';
-                const s = document.getElementById('config-status');
-                if (s) s.textContent = 'Documentation page - visit the live app';
+                try {
+                    const res = await fetch(`${API_BASE_URL}/health`, { credentials: 'include' });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.llmConfigured) {
+                            configWarning.style.display = 'none';
+                        } else {
+                            configWarning.style.display = 'block';
+                            configMessage.textContent = 'Backend connected, but LLM not configured. Set GITHUB_TOKEN on Render.';
+                        }
+                    } else {
+                        throw new Error('Backend unreachable');
+                    }
+                } catch (err) {
+                    configWarning.style.display = 'block';
+                    configMessage.textContent = `Backend connection issue: ${err.message}. Ensure Render app is running.`;
+                }
             }
 
             checkConfigBtn.addEventListener('click', () => {
-                window.location.href = 'https://ai-health-tool-1.onrender.com/';
+                checkConfig();
             });
 
             connectBtn.addEventListener('click', () => {
-                window.location.href = 'https://ai-health-tool-1.onrender.com/';
+                window.location.href = `${API_BASE_URL}/auth/fitbit`;
             });
 
             uploadBtn.addEventListener('click', () => {
@@ -307,8 +321,14 @@
             }
 
             async function loadHistory() {
-                // History disabled on documentation page due to CORS
-                // Visit the live app at https://ai-health-tool-1.onrender.com/ to see history
+                try {
+                    const res = await fetch('https://ai-health-tool-1.onrender.com/api/history', { credentials: 'include' });
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    renderHistory(data.history || []);
+                } catch (err) {
+                    console.log('History unavailable:', err.message);
+                }
             }
 
             function renderDayCards(message) {
@@ -346,11 +366,51 @@
 
             submitBtn.addEventListener('click', async () => {
                 const prompt = (promptInput.value || '').trim();
-                if (!prompt) {
-                    showError('Please enter a prompt first.');
+                if (!prompt && !uploadedFitbitData) {
+                    showError('Enter a prompt or upload Fitbit data.');
                     return;
                 }
-                showError('This is a documentation page. Visit https://ai-health-tool-1.onrender.com/ to use the AI Health Coach.');
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Thinking...';
+                coachingResponse.style.display = 'none';
+                errorSection.style.display = 'none';
+
+                try {
+                    const body = { prompt };
+                    if (uploadedFitbitData) body.fitbitData = uploadedFitbitData;
+                    
+                    const res = await fetch(`https://ai-health-tool-1.onrender.com/api/coach`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(body)
+                    });
+
+                    if (!res.ok) {
+                        const errorText = await res.text().catch(() => 'Unknown error');
+                        if (res.status === 429) throw new Error('Rate limited. Wait and retry.');
+                        try {
+                            const errorData = JSON.parse(errorText);
+                            throw new Error(errorData.message || `Server error (${res.status})`);
+                        } catch {
+                            throw new Error(`Server error (${res.status})`);
+                        }
+                    }
+
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error);
+                    
+                    coachingText.textContent = data.message || 'No response.';
+                    coachingResponse.style.display = 'block';
+                    renderDayCards(data.message || '');
+                    loadHistory();
+                } catch (err) {
+                    showError(err.message || 'Network error');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Send Prompt';
+                }
             });
 
             function showError(msg) {

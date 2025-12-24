@@ -162,6 +162,13 @@ async function callFitbitAPI(endpoint, accessToken) {
 
 // Routes
 
+// History endpoint
+app.get('/api/history', (req, res) => {
+  // Return the last 50 responses
+  const recent = responseHistory.slice(-50).reverse();
+  res.json({ history: recent });
+});
+
 // Home route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -319,16 +326,27 @@ app.get('/api/fitbit/activities', async (req, res) => {
 
 // Get AI coaching based on Fitbit data
 app.post('/api/coach', async (req, res) => {
-  const { fitbitData, prompt: directPrompt, demo } = req.body || {};
-  const useDemo = demo === true || demo === 'true' || process.env.DEMO_MODE === 'true';
-  
+  const body = req.body || {};
+  const useDemo = body.demo === true || body.demo === 'true' || process.env.DEMO_MODE === 'true';
+
+  // Normalize and validate inputs
+  const fitbitData = (typeof body.fitbitData === 'object' && body.fitbitData !== null) ? body.fitbitData : undefined;
+  let directPrompt = body.prompt;
+  if (directPrompt == null) {
+    directPrompt = '';
+  } else if (typeof directPrompt !== 'string') {
+    directPrompt = String(directPrompt);
+  }
+  // Trim and cap prompt length to prevent extreme inputs
+  directPrompt = directPrompt.trim().slice(0, 2000);
+
   // Declare promptForHistory outside try block so it's accessible in catch
   let promptForHistory = '';
 
   try {
     // Build chat messages: inject data context into the system prompt for maximum adherence
-    const hasUserPrompt = directPrompt && String(directPrompt).trim().length > 0;
-    promptForHistory = hasUserPrompt ? directPrompt.trim() : (fitbitData ? '(data-only)' : '(no user prompt)');
+    const hasUserPrompt = directPrompt.length > 0;
+    promptForHistory = hasUserPrompt ? directPrompt : (fitbitData ? '(data-only)' : '(no user prompt)');
     const baseSystem = 'You are an enthusiastic and supportive health coach. You MUST use any provided health data directly. NEVER ask the user to provide data that is already given. Do NOT request clarifications about steps, activity, sleep, or heart rate when those values are present. If some categories are missing (e.g., nutrition), proceed with the available data without asking for more. Provide personalized, encouraging feedback based on the user\'s health data. Be specific, positive, and motivating. Keep responses concise (3-5 sentences). Respond in this exact format without any questions or requests: \n\nSummary: <one sentence that cites at least one numeric metric from the data (e.g., average steps, active minutes, sleep hours, resting HR)>.\nPlan: <3–5 short bullet lines or sentences with concrete actions tailored to the data>.\nRecovery: <one sentence on rest/recovery based on the data>.\nMotivation: <one short encouraging sentence>.\n\nDo NOT include questions in your response.';
     const systemContent = baseSystem;
     const dataContext = createCoachingPrompt(fitbitData || (useDemo ? demoActivities() : null));
@@ -336,7 +354,7 @@ app.post('/api/coach', async (req, res) => {
 
     // Require either a user prompt, fitbit data, or demo mode
     if (!hasUserPrompt && !fitbitData && !useDemo) {
-      return res.status(400).json({ error: 'No prompt or data provided' });
+      return res.status(400).json({ message: 'No prompt or data provided' });
     }
 
     // Call the LLM API with retry logic for rate limits and throttling

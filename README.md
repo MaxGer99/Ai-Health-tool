@@ -4,7 +4,7 @@ A web application that connects to Fitbit to fetch your health data and uses Git
 
 ## Quick Start
 
-### Deploy to Render (Recommended)
+### Deploy to Render (Backend)
 
 1. Sign up at [Render.com](https://render.com)
 2. Connect your GitHub repository
@@ -21,6 +21,16 @@ A web application that connects to Fitbit to fetch your health data and uses Git
    LLM_MODEL=gpt-4o-mini
    ```
 4. Deploy and visit your live app at `https://your-app-name.onrender.com`
+
+### Deploy to GitHub Pages (Frontend)
+
+1. Go to your GitHub repo Settings → Pages
+2. Set source to "Deploy from a branch"
+3. Select branch: `main` and folder: `/docs`
+4. Save and wait for deployment
+5. Visit your app at `https://<username>.github.io/<repo-name>/`
+
+**Note:** GitHub Pages serves the static frontend from `docs/`, which makes API calls to your Render backend. The backend must be deployed first.
 
 ### Run Locally
 
@@ -53,11 +63,12 @@ A web application that connects to Fitbit to fetch your health data and uses Git
 
 ## API Endpoints
 
-- `GET /health` - Health check
+- `GET /health` - Health check (returns config status)
 - `GET /auth/fitbit` - Initiate Fitbit OAuth
 - `GET /api/fitbit/activities` - Fetch today's data
 - `POST /api/coach` - Get AI coaching response
-- `GET /api/responses` - View response history
+- `GET /api/history` - View response history (last 50)
+- `GET /api/queue/status` - LLM queue depth
 
 ## Environment Variables
 
