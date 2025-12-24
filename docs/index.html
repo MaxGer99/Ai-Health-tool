@@ -679,6 +679,26 @@
       if (uploadBtn) uploadBtn.addEventListener('click', () => {
         if (typeof openModal === 'function') openModal();
       });
+
+      // Ensure fitbitFileInput event listener is attached after DOM is ready
+      const fitbitFileInput = document.getElementById('fitbitFileInput');
+      if (fitbitFileInput) {
+        fitbitFileInput.addEventListener('change', async (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          try {
+            const text = await file.text();
+            const json = JSON.parse(text);
+            handleDataSelection(json, 'File loaded.');
+          } catch (err) {
+            showError('Invalid JSON file');
+            uploadedFitbitData = null;
+            fitbitPreview.style.display = 'none';
+            const usage = document.getElementById('data-usage');
+            if (usage) usage.style.display = 'none';
+          }
+        });
+      }
     });
   </script>
 </body>
