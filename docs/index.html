@@ -68,8 +68,12 @@
           background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
           color: #1a1a2e;
           border: none;
-          border-radius: 8px;
-          font-weight: 600;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 1.18rem;
+          padding: 18px 36px;
+          min-width: 120px;
+          min-height: 48px;
           box-shadow: 0 2px 8px rgba(67,233,123,0.08);
           transition: box-shadow 0.2s, transform 0.2s;
         }
@@ -134,6 +138,34 @@
         .card ul { margin: 10px 0 0 18px; }
         .card li { margin-bottom: 4px; }
         .card em { color: #555; }
+        /* Dark mode styles */
+        body.dark {
+          background: linear-gradient(120deg, #232946 0%, #16161a 100%);
+          color: #f4f4f4;
+        }
+        body.dark .card, body.dark .coaching-message, body.dark #fitbit-preview, body.dark textarea {
+          background: rgba(30,34,54,0.92);
+          color: #f4f4f4;
+          border: 1.5px solid #232946;
+        }
+        body.dark .btn, body.dark .btn-primary, body.dark .btn-secondary {
+          background: linear-gradient(90deg, #232946 0%, #4cc9f0 100%);
+          color: #f4f4f4;
+        }
+        body.dark header h1, body.dark .card h2, body.dark .card h3 {
+          color: #a1c4fd;
+        }
+        body.dark .subtitle, body.dark .card p, body.dark .card li, body.dark .coaching-message, body.dark #fitbit-preview {
+          color: #e0e0e0;
+        }
+        body.dark .badge {
+          background: linear-gradient(90deg, #4cc9f0 60%, #232946 100%);
+          color: #232946;
+        }
+        body.dark .error-card {
+          background: #2d1e2f;
+          color: #ffb4b4;
+        }
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -547,6 +579,24 @@
                 errorMessage.textContent = msg;
                 setTimeout(() => { errorSection.style.display = 'none'; }, 4000);
             }
+
+            // Dark mode toggle
+            const darkToggle = document.createElement('button');
+            darkToggle.className = 'btn';
+            darkToggle.style.position = 'absolute';
+            darkToggle.style.top = '24px';
+            darkToggle.style.right = '32px';
+            darkToggle.style.zIndex = '100';
+            darkToggle.textContent = '🌙 Dark Mode';
+            document.body.appendChild(darkToggle);
+            function setDarkMode(on) {
+              document.body.classList.toggle('dark', on);
+              localStorage.setItem('darkMode', on ? '1' : '0');
+              darkToggle.textContent = on ? '☀️ Light Mode' : '🌙 Dark Mode';
+            }
+            darkToggle.onclick = () => setDarkMode(!document.body.classList.contains('dark'));
+            // On load, set from localStorage
+            if (localStorage.getItem('darkMode') === '1') setDarkMode(true);
 
             // Initial history load
             loadHistory();
